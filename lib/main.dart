@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/home_shell.dart';
 
 void main() {
   runApp(const AkilliOfisApp());
@@ -13,7 +13,7 @@ class AkilliOfisApp extends StatelessWidget {
     return MaterialApp(
       title: 'Akıllı Ofis',
       theme: ThemeData.dark(),
-      home: const DashboardScreen(),
+      home: const HomeShell(),
     );
   }
 }
