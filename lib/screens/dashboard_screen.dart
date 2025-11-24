@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/sensor_card.dart';
+import '../data/sensor_model.dart';
+import '../widgets/sensor/sensor_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
