@@ -1,11 +1,13 @@
 // lib/screens/room_detail_screen.dart
 import 'package:flutter/material.dart';
-import '../widgets/room_detail/room_detail_header.dart';
+import '../data/place_model.dart';
 import '../widgets/room_detail/room_detail_pager.dart';
 import 'reservation_screen.dart';
 
 class RoomDetailScreen extends StatelessWidget {
-  const RoomDetailScreen({super.key});
+  final PlaceModel place;
+
+  const RoomDetailScreen({super.key, required this.place});
 
   void _openReservation(BuildContext context) {
     Navigator.of(context).push(
@@ -15,12 +17,10 @@ class RoomDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: seçili oda yoksa "Oda seçilmedi" mesajı göster
     return Scaffold(
-      appBar: AppBar(title: const Text('Oda Detayları')),
+      appBar: AppBar(title: Text(place.name)),
       body: Column(
         children: [
-          const RoomDetailHeader(),
           Expanded(
             child: RoomDetailPager(
               onCreateReservation: () => _openReservation(context),

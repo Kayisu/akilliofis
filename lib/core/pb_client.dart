@@ -1,11 +1,47 @@
 import 'package:pocketbase/pocketbase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_config.dart';
 
 class PbClient {
-  PbClient._internal();
+  static PbClient? _instance;
+  static PbClient get I => _instance!;
 
-  static final PbClient _instance = PbClient._internal();
-  static PbClient get I => _instance;
+  final PocketBase client;
 
-  late final PocketBase client = PocketBase(AppConfig.pocketBaseUrl);
+  PbClient._(this.client);
+
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // 1. Zaman aşımı kontrolü (1 Gün)
+    final lastLoginStr = prefs.getString('last_login_timestamp');
+    if (lastLoginStr != null) {
+      final lastLogin = DateTime.parse(lastLoginStr);
+      final difference = DateTime.now().difference(lastLogin);
+      
+      if (difference.inHours >= 24) {
+        // Süre dolmuş, temizle
+        await prefs.remove('pb_auth');
+        await prefs.remove('last_login_timestamp');
+      }
+    }
+
+    // 2. AuthStore yapılandırması
+    final store = AsyncAuthStore(
+      save: (String data) async {
+        await prefs.setString('pb_auth', data);
+        // Her token kaydında (giriş/refresh) zaman damgasını güncelle
+        await prefs.setString('last_login_timestamp', DateTime.now().toIso8601String());
+      },
+      initial: prefs.getString('pb_auth'),
+      clear: () async {
+        await prefs.remove('pb_auth');
+        await prefs.remove('last_login_timestamp');
+      },
+    );
+
+    final pb = PocketBase(AppConfig.pocketBaseUrl, authStore: store);
+
+    _instance = PbClient._(pb);
+  }
 }

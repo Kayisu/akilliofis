@@ -1,6 +1,5 @@
 // lib/screens/home_shell.dart
 import 'package:flutter/material.dart';
-import 'room_detail_screen.dart';
 import 'room_list_screen.dart';
 import 'settings_screen.dart';
 
@@ -12,12 +11,11 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 1; // ortadaki tab: Ana Sayfa / Odalar
+  int _currentIndex = 0; // 0: Odalar, 1: Ayarlar
 
   @override
   Widget build(BuildContext context) {
     final screens = const [
-      RoomDetailScreen(),
       RoomListScreen(),
       SettingsScreen(),
     ];
@@ -29,12 +27,8 @@ class _HomeShellState extends State<HomeShell> {
         onTap: (i) => setState(() => _currentIndex = i),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.meeting_room_outlined),
-            label: 'Oda Detayları',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
-            label: 'Ana Sayfa / Odalar',
+            label: 'Odalar',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),

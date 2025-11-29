@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
-import 'screens/home_shell.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'core/app_router.dart';
+import 'core/pb_client.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Web'de URL'deki # işaretini kaldırır
+  usePathUrlStrategy();
+
+  // PocketBase ve LocalStorage başlatılıyor
+  await PbClient.init();
+
   runApp(const AkilliOfisApp());
 }
 
@@ -10,10 +20,10 @@ class AkilliOfisApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Akıllı Ofis',
       theme: ThemeData.dark(),
-      home: const HomeShell(),
+      routerConfig: AppRouter.router,
     );
   }
 }

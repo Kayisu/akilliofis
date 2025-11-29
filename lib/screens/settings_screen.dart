@@ -1,12 +1,22 @@
 // lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../auth/auth_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
   Widget build(BuildContext context) {
-    // İleride: auth servisinden gerçek kullanıcı bilgisi çekebiliriz.
+    final user = AuthService.instance.currentUser;
+    final fullName = user?.getStringValue('fullName') ?? 'Bilinmiyor';
+    final email = user?.getStringValue('email') ?? 'Bilinmiyor';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ayarlar'),
@@ -25,15 +35,18 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: const Text('Ad Soyad'),
-            subtitle: const Text('Bahar Gökçül'), // TODO: auth’tan doldur
-            onTap: () {
-              // TODO: profil düzenleme ekranı
+            subtitle: Text(fullName),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              await context.push('/profile-edit');
+              // Profil ekranından dönüldüğünde ekranı yenile
+              setState(() {});
             },
           ),
           ListTile(
             leading: const Icon(Icons.email_outlined),
             title: const Text('E-posta'),
-            subtitle: const Text('bahar@example.com'), // TODO: auth’tan doldur
+            subtitle: Text(email),
             onTap: () {},
           ),
           const SizedBox(height: 16),
@@ -47,18 +60,12 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          SwitchListTile(
-            title: const Text('E-posta bildirimleri'),
-            value: true,
-            onChanged: (v) {
-              // TODO: kullanıcı tercihleri kaydedilecek
-            },
-          ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Çıkış Yap'),
             onTap: () {
-              // TODO: authService.logout() + login ekranına yönlendir
+              AuthService.instance.logout();
+              context.go('/login');
             },
           ),
         ],
