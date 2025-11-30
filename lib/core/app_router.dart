@@ -5,6 +5,8 @@ import '../screens/home_shell.dart';
 import '../screens/profile_edit_screen.dart';
 import '../screens/room_detail_screen.dart';
 import '../auth/auth_service.dart';
+import '../data/place_model.dart';
+import '../screens/reservation_create.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -25,7 +27,7 @@ class AppRouter {
       GoRoute(
         path: '/room-detail',
         builder: (context, state) {
-          final place = state.extra as dynamic; // PlaceModel olarak cast edilecek
+          final place = state.extra as dynamic; 
           return RoomDetailScreen(place: place);
         },
       ),
@@ -33,6 +35,15 @@ class AppRouter {
         path: '/profile-edit',
         builder: (context, state) => const ProfileEditScreen(),
       ),
+      GoRoute(
+        path: '/reservation/create',
+        builder: (context, state) {
+          // Gelen 'extra' verisini PlaceModel olarak alıyoruz
+          final place = state.extra as PlaceModel?; 
+          return ReservationCreate(place: place);
+        },
+      ),
+      
     ],
     redirect: (context, state) {
       final isLoggedIn = AuthService.instance.isAuthenticated;

@@ -1,8 +1,9 @@
 // lib/screens/room_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // <-- BU SATIRI EKLEYİN
 import '../data/place_model.dart';
 import '../widgets/room_detail/room_detail_pager.dart';
-import 'reservation_screen.dart';
+// import 'reservation_screen.dart'; // <-- Artık router ile gittiğimiz için buna gerek kalmayabilir ama kalsa da sorun olmaz.
 
 class RoomDetailScreen extends StatelessWidget {
   final PlaceModel place;
@@ -10,9 +11,7 @@ class RoomDetailScreen extends StatelessWidget {
   const RoomDetailScreen({super.key, required this.place});
 
   void _openReservation(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ReservationScreen()),
-    );
+    context.push('/reservation/create', extra: place);
   }
 
   @override
