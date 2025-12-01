@@ -27,25 +27,20 @@ class _ReservationListState extends State<ReservationList> {
     });
   }
 
-  // Fonksiyon ismi artık cancelItem
   Future<void> _cancelItem(String id) async {
     try {
       await _repo.cancelReservation(id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rezervasyon iptal edildi.')),
+          const SnackBar(content: Text('Liste güncellendi.')),
         );
       }
-      // Listeyi sunucudan tekrar çekmemize gerek yok, 
-      // Dismissible zaten görsel olarak sildi.
-      // Ama veri tutarlılığı için arka planda _refresh çağrılabilir.
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('İptal hatası: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('İşlem başarısız: $e'), backgroundColor: Colors.red),
         );
       }
-      // Hata olursa listeyi yenile ki sildiğimiz eleman geri gelsin
       _refresh();
     }
   }
@@ -98,41 +93,52 @@ class _ReservationListState extends State<ReservationList> {
             itemBuilder: (context, index) {
               final item = list[index];
               final String itemKey = item.id ?? UniqueKey().toString();
+              
+              // Duruma göre tasarım değişkenlerini belirle
+              final isRejected = item.status == 'rejected';
+              
+              final actionColor = isRejected ? Colors.red.shade700 : Colors.orange.shade700;
+              final actionText = isRejected ? 'LİSTEDEN SİL' : 'İPTAL ET';
+              final actionIcon = isRejected ? Icons.delete_sweep_outlined : Icons.cancel_presentation;
+              
+              final dialogTitle = isRejected ? 'Listeden Sil' : 'Rezervasyon İptali';
+              final dialogContent = isRejected 
+                  ? 'Bu reddedilmiş rezervasyonu listeden kaldırmak istiyor musunuz?'
+                  : 'Bu rezervasyonu iptal etmek istediğinize emin misiniz?';
+              final dialogButtonText = isRejected ? 'Evet, Sil' : 'Evet, İptal Et';
 
               return Dismissible(
                 key: Key(itemKey),
-                direction: DismissDirection.endToStart, // Sola kaydır
+                direction: DismissDirection.endToStart,
                 
-                // Arkaplan Tasarımı (Turuncu + İptal İkonu)
+                // Dinamik Arkaplan
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 24),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade700, // İptal rengi
+                    color: actionColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
-                    children: const [
+                    children: [
                       Text(
-                        'İPTAL ET', 
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                        actionText, 
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.cancel_presentation, color: Colors.white, size: 28),
+                      const SizedBox(width: 8),
+                      Icon(actionIcon, color: Colors.white, size: 28),
                     ],
                   ),
                 ),
                 
-                // Onay Diyaloğu
+                // Dinamik Onay Diyaloğu
                 confirmDismiss: (direction) async {
                   return await showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Rezervasyon İptali'),
-                      content: const Text(
-                        'Bu rezervasyonu iptal etmek ve listeden kaldırmak istediğinize emin misiniz?'
-                      ),
+                      title: Text(dialogTitle),
+                      content: Text(dialogContent),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(false),
@@ -140,17 +146,16 @@ class _ReservationListState extends State<ReservationList> {
                         ),
                         FilledButton(
                           style: FilledButton.styleFrom(
-                            backgroundColor: Colors.orange.shade800,
+                            backgroundColor: actionColor,
                           ),
                           onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text('Evet, İptal Et'),
+                          child: Text(dialogButtonText),
                         ),
                       ],
                     ),
                   );
                 },
 
-                // Onaylanınca çalışır
                 onDismissed: (direction) {
                   if (item.id != null) {
                     _cancelItem(item.id!);
