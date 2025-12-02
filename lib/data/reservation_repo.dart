@@ -21,11 +21,37 @@ class ReservationRepo {
     return records.map((e) => ReservationModel.fromRecord(e)).toList();
   }
 
-  // YENİ: İptal Etme (Soft Delete)
+  Future<List<ReservationModel>> getAdminReservations({String? filterStatus}) async {
+    String filter = 'status != "cancelled"'; // İptalleri admin de görmesin (veya görsün istersen sil)
+    
+    if (filterStatus != null) {
+      filter += ' && status = "$filterStatus"';
+    }
+
+    final records = await _pb.collection('reservations').getFullList(
+      filter: filter,
+      sort: '-start_ts', // En yeni en üstte
+      expand: 'place_id,user_id', // Hem odayı hem kullanıcıyı çekiyoruz
+    );
+    
+    return records.map((e) => ReservationModel.fromRecord(e)).toList();
+  }
+
+  Future<void> updateStatus(String id, String newStatus) async {
+    final body = {
+      'status': newStatus,
+    };
+    await _pb.collection('reservations').update(id, body: body);
+  }
+
   Future<void> cancelReservation(String id) async {
     final body = {
       'status': 'cancelled', // Statüyü 'cancelled' yapıyoruz
     };
     await _pb.collection('reservations').update(id, body: body);
+  }
+
+  Future<void> deleteReservation(String id) async {
+    await _pb.collection('reservations').delete(id);
   }
 }

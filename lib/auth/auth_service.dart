@@ -50,6 +50,13 @@ class AuthService {
     }
   }
 
+  bool get isAdmin {
+    if (!isAuthenticated) return false;
+    return _pb.authStore.model is RecordModel 
+        ? (_pb.authStore.model as RecordModel).getBoolValue('isAdmin') 
+        : false;
+  }
+
   Future<RecordModel> updateProfile({required String fullName}) async {
     final body = <String, dynamic>{
       'fullName': fullName,

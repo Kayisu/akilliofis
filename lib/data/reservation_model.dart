@@ -5,9 +5,8 @@ class ReservationModel {
   final DateTime startTs;
   final DateTime endTs;
   final String status;
-  
-  // Ekstra: İlişkisel veriler (Expand)
   final String? placeName; 
+  final String? userName;
 
   ReservationModel({
     this.id,
@@ -17,6 +16,7 @@ class ReservationModel {
     required this.endTs,
     this.status = 'pending',
     this.placeName,
+    this.userName,
   });
 
   Map<String, dynamic> toJson() {
@@ -30,7 +30,6 @@ class ReservationModel {
   }
 
   factory ReservationModel.fromRecord(dynamic record) {
-    // PocketBase RecordModel veya JSON map gelebilir
     final data = record is Map<String, dynamic> ? record : record.data;
     final String rId = record is Map<String, dynamic> ? record['id'] : record.id;
     
@@ -39,9 +38,19 @@ class ReservationModel {
     if (record.expand != null && record.expand.containsKey('place_id')) {
       final placeData = record.expand['place_id'];
       if (placeData is List && placeData.isNotEmpty) {
-        pName = placeData.first.data['name']; // RecordModel listesi döner
-      } else if (placeData is Map) { // Bazen tekil obje dönebilir
+        pName = placeData.first.data['name'];
+      } else if (placeData is Map) {
         pName = placeData['name'];
+      }
+    }
+
+    String? uName;
+    if (record.expand != null && record.expand.containsKey('user_id')) {
+      final userData = record.expand['user_id'];
+      if (userData is List && userData.isNotEmpty) {
+        uName = userData.first.data['fullName'];
+      } else if (userData is Map) {
+        uName = userData['fullName'];
       }
     }
 
@@ -53,6 +62,7 @@ class ReservationModel {
       endTs: DateTime.parse(data['end_ts']),
       status: data['status'] ?? 'pending',
       placeName: pName,
+      userName: uName,
     );
   }
 }
