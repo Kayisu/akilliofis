@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
 
-//ikinci page
 class RoomComfortDonut extends StatelessWidget {
-  final VoidCallback onCreateReservation;
+  final String roomId; // Yeni parametre
 
-  const RoomComfortDonut({super.key, required this.onCreateReservation});
+  // onCreateReservation kaldırıldı
+  const RoomComfortDonut({super.key, required this.roomId});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0), // Kenarlardan boşluk
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // Başlık
           const Text(
             "Konfor Analizi",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 20), // Başlık ile grafik arası boşluk
-          // Grafik Alanı
+          const SizedBox(height: 20),
           Expanded(
             child: Center(
               child: SizedBox(
-                height: 200, // Grafik boyutu
+                height: 200,
                 width: 200,
                 child: Stack(
                   children: [
                     const SizedBox.expand(
                       child: CircularProgressIndicator(
-                        value: 0.75, // %75 Konfor Skoru
+                        value: 0.75,
                         strokeWidth: 50,
-                        color: Colors.grey, // Konfor Skoru Rengi
-                        backgroundColor: Colors.black, // Konforsuzluk Rengi
+                        color: Colors.grey,
+                        backgroundColor: Colors.black,
                       ),
                     ),
                     Center(
@@ -60,8 +58,7 @@ class RoomComfortDonut extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20), // Alt boşluk
-          // Lejant (Açıklama)
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -70,13 +67,7 @@ class RoomComfortDonut extends StatelessWidget {
               _buildLegendItem(Colors.black, "Konforsuzluk %25"),
             ],
           ),
-
-          // Rezervasyon Butonu
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: onCreateReservation,
-            child: const Text("Rezervasyon Oluştur"),
-          ),
+          // Buton buradan kaldırıldı, ana ekranda zaten var.
         ],
       ),
     );

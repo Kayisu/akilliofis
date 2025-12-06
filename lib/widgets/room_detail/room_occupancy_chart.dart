@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
-//Bu birinci page
 class RoomOccupancyChart extends StatelessWidget {
-  final VoidCallback onCreateReservation;
+  final String roomId; // Yeni parametre eklendi
 
-  const RoomOccupancyChart({super.key, required this.onCreateReservation});
+  // onCreateReservation kaldırıldı, roomId eklendi
+  const RoomOccupancyChart({super.key, required this.roomId});
 
   @override
   Widget build(BuildContext context) {
-    // Ekran yüksekliğini dinamik olarak alıyoruz
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
@@ -42,10 +41,9 @@ class RoomOccupancyChart extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Grafik Alanı (Bar Chart)
+          // Grafik Alanı
           SizedBox(
-            height:
-                screenHeight * 0.4, // Ekranın %40'ını grafik için ayırıyoruz
+            height: screenHeight * 0.4,
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -97,7 +95,7 @@ class RoomOccupancyChart extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20), // Alt boşluk azaltıldı
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -123,7 +121,7 @@ class RoomOccupancyChart extends StatelessWidget {
       children: [
         Container(
           width: 40,
-          height: height * 10, // Bar yüksekliği (çarpan ile ölçeklendirme)
+          height: height * 10,
           color: color,
         ),
         const SizedBox(height: 5),

@@ -84,9 +84,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
 
   @override
   Widget build(BuildContext context) {
-    // 3. SAYFALARI 'BUILD' İÇİNE ALDIK
-    // Neden? Çünkü _currentData değiştiğinde (setState olduğunda)
-    // ekranın güncellenmesi için sayfaların yeniden oluşturulması lazım.
+
     final pages = [
       // 1. Sayfa
       RoomOccupancyChart(roomId: widget.roomId),
@@ -110,7 +108,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
                   color:
                       _currentPage > 0
                           ? Colors.black
-                          : Colors.grey.withOpacity(0.3),
+                          : Colors.grey.withAlpha(30),
                   onPressed: _currentPage > 0 ? _prevPage : null,
                 ),
 
@@ -123,7 +121,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
                         _currentPage = index;
                       });
                     },
-                    children: pages, // Yukarıda tanımladığımız dinamik liste
+                    children: pages, 
                   ),
                 ),
 
@@ -133,17 +131,16 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
                   color:
                       _currentPage < pages.length - 1
                           ? Colors.black
-                          : Colors.grey.withOpacity(0.3),
+                          : Colors.grey.withAlpha(30),
                   onPressed: _currentPage < pages.length - 1 ? _nextPage : null,
                 ),
               ],
             ),
           ),
 
-          // --- ALT KISIM: NOKTALAR (DOTS) ---
           const SizedBox(
             height: 20,
-          ), // Boşluğu biraz azalttım (50 çok fazlaydı)
+          ), 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(pages.length, (index) {
@@ -162,7 +159,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
               );
             }),
           ),
-          const SizedBox(height: 20), // Alt boşluk
+          const SizedBox(height: 20), 
         ],
       ),
     );
