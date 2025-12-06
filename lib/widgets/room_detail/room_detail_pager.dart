@@ -1,9 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-
-// --- KENDİ DOSYALARINI İMPORT ET ---
-import '../../data/sensor_model.dart'; // Model dosyan
-import '../../data/sensor_repo.dart'; // Repo dosyan
+import '../../data/sensor_model.dart';
+import '../../data/forecast_model.dart';
 
 import 'room_occupancy_chart.dart';
 import 'room_comfort_donut.dart';
@@ -11,8 +8,16 @@ import 'room_sensor_stats.dart';
 
 class RoomDetailPager extends StatefulWidget {
   final String roomId;
+  // Dışarıdan gelen veriler (Refresh ile güncellenir)
+  final SensorData sensorData;
+  final List<ForecastModel> forecasts;
 
-  const RoomDetailPager({super.key, required this.roomId});
+  const RoomDetailPager({
+    super.key, 
+    required this.roomId,
+    required this.sensorData,
+    required this.forecasts,
+  });
 
   @override
   State<RoomDetailPager> createState() => _RoomDetailPagerState();
@@ -22,52 +27,14 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
-  // 1. REPO VE TIMER TANIMLARI (EKSİKTİ, EKLENDİ)
-  final SensorRepository _repository = SensorRepository();
-  Timer? _timer;
-
-  // Başlangıç verisi (Boş)
-  SensorData _currentData = SensorData(
-    temperature: 0,
-    humidity: 0,
-    co2: 0,
-    gas: 0,
-    comfortScore: 0,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    // 2. VERİ ÇEKMEYİ BAŞLAT (EKSİKTİ, EKLENDİ)
-    _startDataFetching();
-  }
+  // REPO ve TIMER KALDIRILDI (Artık veriyi üstten alıyor)
 
   @override
   void dispose() {
-    _timer?.cancel(); // Hafıza sızıntısını önle
     _controller.dispose();
     super.dispose();
   }
 
-  // --- VERİ ÇEKME FONKSİYONLARI ---
-  void _startDataFetching() {
-    _fetchData(); // İlk açılışta çek
-    // Her 3 saniyede bir güncelle
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      _fetchData();
-    });
-  }
-
-  Future<void> _fetchData() async {
-    final newData = await _repository.getSensorData();
-    if (mounted) {
-      setState(() {
-        _currentData = newData;
-      });
-    }
-  }
-
-  // --- SAYFA GEÇİŞ FONKSİYONLARI ---
   void _prevPage() {
     _controller.previousPage(
       duration: const Duration(milliseconds: 300),
@@ -84,84 +51,73 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
 
   @override
   Widget build(BuildContext context) {
-
     final pages = [
-      // 1. Sayfa
-      RoomOccupancyChart(roomId: widget.roomId),
-      // 2. Sayfa
-      RoomComfortDonut(roomId: widget.roomId),
-      // 3. Sayfa: DİNAMİK VERİYİ BURADAN GÖNDERİYORUZ
-      RoomSensorStats(data: _currentData),
+      // 1. Sayfa: Tahmin Grafiği (Forecast verisiyle)
+      RoomOccupancyChart(
+        roomId: widget.roomId, 
+        forecasts: widget.forecasts
+      ),
+      
+      // 2. Sayfa: Anlık Konfor (Sensor verisiyle)
+      RoomComfortDonut(data: widget.sensorData),
+      
+      // 3. Sayfa: Anlık Detaylar (Sensor verisiyle)
+      RoomSensorStats(data: widget.sensorData),
     ];
 
-    // Senin istediğin Expanded yapısı:
-    return Expanded(
-      child: Column(
-        children: [
-          // --- ÜST KISIM: OKLAR VE SLIDER ---
-          Expanded(
-            child: Row(
-              children: [
-                // Sol Ok
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, size: 24),
-                  color:
-                      _currentPage > 0
-                          ? Colors.black
-                          : Colors.grey.withAlpha(30),
-                  onPressed: _currentPage > 0 ? _prevPage : null,
-                ),
-
-                // Orta: Kayan Grafikler
-                Expanded(
-                  child: PageView(
-                    controller: _controller,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    children: pages, 
-                  ),
-                ),
-
-                // Sağ Ok
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios, size: 24),
-                  color:
-                      _currentPage < pages.length - 1
-                          ? Colors.black
-                          : Colors.grey.withAlpha(30),
-                  onPressed: _currentPage < pages.length - 1 ? _nextPage : null,
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        // İçerik Alanı
+        Expanded(
+          child: PageView(
+            controller: _controller,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            children: pages,
           ),
+        ),
 
-          const SizedBox(
-            height: 20,
-          ), 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(pages.length, (index) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _currentPage == index ? 10 : 8,
-                height: _currentPage == index ? 10 : 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      _currentPage == index
-                          ? Colors.black
-                          : Colors.grey.shade400,
-                ),
-              );
-            }),
+        // Alt Navigasyon (Dots + Oklar)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.chevron_left, color: Colors.grey.withAlpha(_currentPage > 0 ? 255 : 50)),
+                onPressed: _currentPage > 0 ? _prevPage : null,
+              ),
+              
+              // Dots
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(pages.length, (index) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: _currentPage == index ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: _currentPage == index
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey.shade700,
+                    ),
+                  );
+                }),
+              ),
+
+              IconButton(
+                icon: Icon(Icons.chevron_right, color: Colors.grey.withAlpha(_currentPage < pages.length - 1 ? 255 : 50)),
+                onPressed: _currentPage < pages.length - 1 ? _nextPage : null,
+              ),
+            ],
           ),
-          const SizedBox(height: 20), 
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,29 +1,33 @@
-import 'dart:math';
-import '../data/sensor_model.dart'; // Model dosyanı import et
+import 'package:flutter/foundation.dart'; // debugPrint için gerekli
+import 'package:pocketbase/pocketbase.dart';
+import '../core/pb_client.dart';
+import 'sensor_model.dart';
 
 class SensorRepository {
-  // Simülasyon için başlangıç değerleri
-  double _temp = 24.0;
-  double _hum = 40.0;
-  int _co2 = 700;
+  final PocketBase _pb = PbClient.I.client;
 
-  // Veriyi getiren fonksiyon
-  // İleride buradaki 'Future' sayesinde internetten çekiyormuş gibi bekletebiliriz
-  Future<SensorData> getSensorData() async {
-    final random = Random();
+  /// Belirtilen odaya (placeId) ait EN SON sensör verisini çeker.
+  Future<SensorData> getLatestSensorData(String placeId) async {
+    try {
+      // 'sensor_readings' koleksiyonundan, place_id'si eşleşen
+      // 'created' tarihine göre en yeni (descending) 1 kaydı getir.
+      final records = await _pb.collection('sensor_readings').getList(
+        page: 1,
+        perPage: 1,
+        filter: 'place_id = "$placeId"',
+        sort: '-created', 
+      );
 
-    // Simülasyon Mantığı: Eski değere göre biraz artır/azalt
-    _temp += (random.nextDouble() * 2 - 1); // +/- 1 derece
-    _hum += (random.nextDouble() * 4 - 2); // +/- 2 nem
-    _co2 += (random.nextInt(50) - 25); // +/- 25 ppm
-
-    // Veriyi paketleyip geri gönderiyoruz (Model formatında)
-    return SensorData(
-      temperature: double.parse(_temp.toStringAsFixed(1)),
-      humidity: double.parse(_hum.toStringAsFixed(1)),
-      co2: _co2,
-      gas: 75, // Sabit örnek
-      comfortScore: 0.6 + (random.nextDouble() * 0.2),
-    );
+      if (records.items.isNotEmpty) {
+        return SensorData.fromRecord(records.items.first);
+      } else {
+        // Kayıt yoksa boş model dön
+        return SensorData.empty();
+      }
+    } catch (e) {
+      // Hata durumunda (loglayabilirsin) boş dönelim ki uygulama çökmesin
+      debugPrint('Sensör verisi çekilemedi: $e');
+      return SensorData.empty();
+    }
   }
 }
