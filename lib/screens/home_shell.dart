@@ -1,8 +1,7 @@
-// lib/screens/home_shell.dart
 import 'package:flutter/material.dart';
-import 'room_detail_screen.dart';
 import 'room_list_screen.dart';
 import 'settings_screen.dart';
+import 'reservation_list.dart'; // YENİ IMPORT (klasörsüz)
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -12,32 +11,37 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 1; // ortadaki tab: Ana Sayfa / Odalar
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final screens = const [
-      RoomDetailScreen(),
+      ReservationList(),
       RoomListScreen(),
       SettingsScreen(),
     ];
 
     return Scaffold(
       body: screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.meeting_room_outlined),
-            label: 'Oda Detayları',
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        destinations: const [
+                    NavigationDestination(
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Rezervasyonlar',
           ),
-          BottomNavigationBarItem(
+          
+          NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
-            label: 'Ana Sayfa / Odalar',
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Odalar',
           ),
-          BottomNavigationBarItem(
+
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Ayarlar',
           ),
         ],
