@@ -17,17 +17,22 @@ class RoomComfortDonut extends StatelessWidget {
     String statusText;
 
     if (percent <= 30) {
-      scoreColor = Colors.grey.shade800; // Siyah yerine koyu gri (görünürlük için)
+      scoreColor =
+          Colors.grey.shade800; // Siyah yerine koyu gri (görünürlük için)
       statusIcon = Icons.sentiment_very_dissatisfied;
       statusText = "Kötü";
-    } else if (percent <= 55) {
+    } else if (percent <= 40) {
       scoreColor = Colors.redAccent;
       statusIcon = Icons.sentiment_dissatisfied;
       statusText = "Rahatsız";
-    } else if (percent <= 70) {
+    } else if (percent <= 50) {
       scoreColor = Colors.yellowAccent;
       statusIcon = Icons.sentiment_neutral;
       statusText = "İdare Eder";
+    } else if (percent <= 85) {
+      scoreColor = Colors.lightGreenAccent;
+      statusIcon = Icons.sentiment_satisfied;
+      statusText = "İyi";
     } else {
       scoreColor = Colors.greenAccent;
       statusIcon = Icons.sentiment_very_satisfied;
@@ -61,7 +66,8 @@ class RoomComfortDonut extends StatelessWidget {
                   width: 180,
                   height: 180,
                   child: CircularProgressIndicator(
-                    value: score > 0 ? score : 0.01, // 0 olsa bile minik görünsün
+                    value:
+                        score > 0 ? score : 0.01, // 0 olsa bile minik görünsün
                     strokeWidth: 8, // İnceltildi
                     color: scoreColor,
                     strokeCap: StrokeCap.round, // Yuvarlak uçlar
@@ -74,9 +80,9 @@ class RoomComfortDonut extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      statusIcon, 
-                      color: scoreColor.withAlpha(204), 
-                      size: 28
+                      statusIcon,
+                      color: scoreColor.withAlpha(204),
+                      size: 28,
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -94,7 +100,13 @@ class RoomComfortDonut extends StatelessWidget {
                         ),
                         const Padding(
                           padding: EdgeInsets.only(top: 8.0),
-                          child: Text("%", style: TextStyle(color: Colors.white54, fontSize: 16)),
+                          child: Text(
+                            "%",
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -117,10 +129,10 @@ class RoomComfortDonut extends StatelessWidget {
         Text(
           "GENEL KONFOR SKORU",
           style: TextStyle(
-            color: Colors.white.withAlpha(77), 
+            color: Colors.white.withAlpha(77),
             fontSize: 10,
             letterSpacing: 2.0, // Harfler arası boşluk (premium hissi)
-            fontWeight: FontWeight.w600
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

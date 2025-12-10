@@ -24,7 +24,7 @@ class SensorData {
       humidity: record.getDoubleValue('rh_percent'),
       co2: record.getIntValue('co2_ppm'),
       // voc_index genelde 0-500 arasıdır, int olarak alabiliriz
-      gas: record.getIntValue('voc_index'), 
+      gas: record.getIntValue('voc_index'),
       comfortScore: record.getDoubleValue('comfort_score'),
       recordedAt: DateTime.parse(record.getStringValue('recorded_at')),
     );
