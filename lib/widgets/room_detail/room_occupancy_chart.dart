@@ -17,7 +17,7 @@ class RoomOccupancyChart extends StatefulWidget {
 
 class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   int _selectedDayIndex = 0;
-  int? _focusedIndex; // Hangi barın seçili olduğunu tutar
+  int? _focusedIndex;
 
   final List<String> _days = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'];
   final List<String> _timeLabels = ['09:00', '11:00', '13:00', '15:00', '17:00'];
@@ -49,7 +49,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       child: Column(
         children: [
-          // 1. BAŞLIK (Dinamik Bilgi Alanı)
+          // 1. BAŞLIK
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _buildHeaderInfo(occupancyData, comfortData),
@@ -69,7 +69,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                 final stepX = width / _timeLabels.length;
                 
                 return GestureDetector(
-                  // Boşluğa tıklayınca seçimi kaldır
                   onTap: () => setState(() => _focusedIndex = null),
                   child: Stack(
                     alignment: Alignment.bottomCenter,
@@ -78,10 +77,10 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                       Positioned(
                         top: height * 0.5,
                         left: 0, right: 0,
-                        child: Container(height: 1, color: Colors.white.withAlpha(13)),
+                        child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05)),
                       ),
 
-                      // Barlar (Tıklanabilir Alanlar)
+                      // Barlar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -93,10 +92,8 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
                           return GestureDetector(
                             onTapDown: (_) => setState(() => _focusedIndex = index),
-                            // Parmağını çekince seçimi kaldırmak istersen bu satırı aç:
-                            // onTapUp: (_) => setState(() => _focusedIndex = null),
                             child: Container(
-                              color: Colors.transparent, // Tıklama alanını genişletir
+                              color: Colors.transparent,
                               width: stepX, 
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.end,
@@ -104,17 +101,17 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                                   // Bar
                                   AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
-                                    width: isFocused ? 28 : 24, // Seçilince kalınlaşır
+                                    width: isFocused ? 28 : 24,
                                     height: barHeight == 0 ? 4 : barHeight,
                                     decoration: BoxDecoration(
                                       borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                                      border: isFocused ? Border.all(color: Colors.white, width: 1) : null, // Seçilince beyaz çerçeve
+                                      border: isFocused ? Border.all(color: Colors.white, width: 1) : null,
                                       gradient: LinearGradient(
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
                                         colors: [
-                                          const Color(0xFF26C6DA).withOpacity(isFocused ? 1.0 : 0.6), 
-                                          const Color(0xFF26C6DA).withOpacity(0.1), 
+                                          const Color(0xFF26C6DA).withValues(alpha: isFocused ? 1.0 : 0.6), 
+                                          const Color(0xFF26C6DA).withValues(alpha: 0.1), 
                                         ],
                                       ),
                                     ),
@@ -126,7 +123,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: isFocused ? FontWeight.bold : FontWeight.w400,
-                                      color: isFocused ? Colors.white : Colors.white.withOpacity(0.5),
+                                      color: isFocused ? Colors.white : Colors.white.withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ],
@@ -138,8 +135,8 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
                       // Konfor Çizgisi
                       Positioned.fill(
-                        bottom: 30, 
-                        child: IgnorePointer( // Çizgi tıklamayı engellemesin
+                        bottom: 30,
+                        child: IgnorePointer(
                           child: CustomPaint(
                             painter: _ComfortLinePainter(
                               data: comfortData,
@@ -173,37 +170,43 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
           const SizedBox(height: 30),
 
-          // 4. GÜN SEÇİCİ
+          // 4. GÜN SEÇİCİ (GÜNCELLENEN KISIM)
           Container(
             height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.all(4), // Padding azaltıldı
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08), 
+              color: Colors.white.withValues(alpha: 0.08), 
               borderRadius: BorderRadius.circular(25), 
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(_days.length, (index) {
                 final isSelected = _selectedDayIndex == index;
-                return GestureDetector(
-                  onTap: () => setState(() { 
-                    _selectedDayIndex = index;
-                    _focusedIndex = null; // Gün değişince seçimi sıfırla
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFE1BEE7) : Colors.transparent, 
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _days[index],
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Colors.black : Colors.white.withOpacity(0.6),
+                // Expanded ile her güne eşit alan ayırıyoruz
+                return Expanded( 
+                  child: GestureDetector(
+                    onTap: () => setState(() { 
+                      _selectedDayIndex = index;
+                      _focusedIndex = null;
+                    }),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      alignment: Alignment.center,
+                      // Yanlardan (horizontal) padding yerine sadece dikey padding
+                      padding: const EdgeInsets.symmetric(vertical: 8), 
+                      margin: const EdgeInsets.symmetric(horizontal: 1), // Elemanlar birbirine yapışmasın
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFE1BEE7) : Colors.transparent, 
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _days[index],
+                        style: TextStyle(
+                          fontSize: 11, // Biraz küçültüldü
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? Colors.black : Colors.white.withValues(alpha: 0.6),
+                        ),
+                        maxLines: 1,
                       ),
                     ),
                   ),
@@ -218,7 +221,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
   // Dinamik Başlık Widget'ı
   Widget _buildHeaderInfo(List<double> occupancyData, List<double> comfortData) {
-    // Eğer hiçbir şeye basılmadıysa varsayılan başlık
     if (_focusedIndex == null) {
       return Text(
         "TAHMİNİ DOLULUK & KONFOR",
@@ -226,13 +228,12 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: Colors.white.withOpacity(0.4),
+          color: Colors.white.withValues(alpha: 0.4),
           letterSpacing: 1.5,
         ),
       );
     }
 
-    // Basıldıysa detayları göster
     final occ = (occupancyData[_focusedIndex!] * 100).toInt();
     final comf = (comfortData[_focusedIndex!] * 100).toInt();
     final time = _timeLabels[_focusedIndex!];
@@ -270,7 +271,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
           label,
           style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w600,
-            color: Colors.white.withOpacity(0.6), letterSpacing: 1.0,
+            color: Colors.white.withValues(alpha: 0.6), letterSpacing: 1.0,
           ),
         ),
       ],
@@ -278,7 +279,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   }
 }
 
-// --- ÖZEL ÇİZİM SINIFI (Aynı kaldı) ---
+// --- ÖZEL ÇİZİM SINIFI ---
 class _ComfortLinePainter extends CustomPainter {
   final List<double> data;
   final Color color;
@@ -310,15 +311,17 @@ class _ComfortLinePainter extends CustomPainter {
       points.add(Offset(x, y));
     }
 
-    path.moveTo(points[0].dx, points[0].dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(path, paintLine);
+    if (points.isNotEmpty) {
+      path.moveTo(points[0].dx, points[0].dy);
+      for (int i = 1; i < points.length; i++) {
+        path.lineTo(points[i].dx, points[i].dy);
+      }
+      canvas.drawPath(path, paintLine);
 
-    for (var point in points) {
-      canvas.drawCircle(point, 4.0, paintDotFill);
-      canvas.drawCircle(point, 4.0, paintDotBorder);
+      for (var point in points) {
+        canvas.drawCircle(point, 4.0, paintDotFill);
+        canvas.drawCircle(point, 4.0, paintDotBorder);
+      }
     }
   }
 
