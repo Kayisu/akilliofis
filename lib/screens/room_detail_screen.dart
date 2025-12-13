@@ -24,7 +24,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   
   Timer? _timer;
 
-  // Veriler
+  // Veriler (Varsayılan boş değerler)
   SensorData _currentSensorData = SensorData.empty();
   List<ForecastModel> _currentForecasts = [];
   bool _isLoading = true;
@@ -42,9 +42,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   void _startLiveUpdate() {
+    // İlk açılışta her şeyi çek
     _refreshData();
-    // 5 saniyede bir sadece sensör verisini güncelle
+    
+    // Sonra sadece sensör verisini 5 saniyede bir güncelle
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      // Repository metodunun doğru ismi: getLatestSensorData
       final sensor = await _sensorRepo.getLatestSensorData(widget.place.id);
       if (mounted) {
         setState(() {
@@ -56,9 +59,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   Future<void> _refreshData() async {
     try {
+      // Repository metodlarının doğru isimleri burada önemli
       final results = await Future.wait([
         _sensorRepo.getLatestSensorData(widget.place.id),
-        _forecastRepo.getWeeklyForecasts(widget.place.id),
+        _forecastRepo.getWeeklyForecasts(widget.place.id), 
       ]);
 
       if (mounted) {
@@ -77,7 +81,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ... AppBar aynı ...
+      appBar: AppBar(title: Text(widget.place.name)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFB39DDB)))
           : LayoutBuilder(
@@ -91,7 +95,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       height: constraints.maxHeight, 
                       child: Column(
                         children: [
-                          // Pager
+                          // Pager'a verileri parametre olarak geçiyoruz
                           Expanded(
                             child: RoomDetailPager(
                               roomId: widget.place.id,
@@ -100,7 +104,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             ),
                           ),
                           
-                          // ZARİF VE MİNİMAL BUTON
                           _buildMinimalButton(context),
                         ],
                       ),
@@ -114,36 +117,28 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   Widget _buildMinimalButton(BuildContext context) {
     return Padding(
-      // Kenarlardan daha fazla boşluk bırakarak butonu küçültüyoruz
       padding: const EdgeInsets.fromLTRB(40, 0, 40, 30), 
       child: SizedBox(
-        height: 48, // Yüksekliği azalttık (Önceki 64'tü)
+        height: 48, 
         width: double.infinity,
         child: FilledButton(
           onPressed: () => context.push('/reservation/create', extra: widget.place),
           style: FilledButton.styleFrom(
-            // Göz yormayan, mat ve şık bir Lila/Mor tonu
             backgroundColor: const Color(0xFF7E57C2), 
             foregroundColor: Colors.white,
-            elevation: 0, // Gölgeyi kaldırdık (Düz tasarım)
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24), // Tam yuvarlak kenarlar
+              borderRadius: BorderRadius.circular(24),
             ),
-            // Basınca hafif bir renk değişimi (Splash)
-            overlayColor: Colors.white.withAlpha(26),
           ),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.add, size: 18), // Çok minimal bir ikon
+            children: [
+              Icon(Icons.add, size: 18),
               SizedBox(width: 8),
               Text(
-                'Rezervasyon Oluştur', // Normal yazım (Bağırmayan font)
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500, // Medium kalınlık
-                  letterSpacing: 0.5, // Hafif aralık
-                ),
+                'Rezervasyon Oluştur',
+                style: TextStyle(fontWeight: FontWeight.w500, letterSpacing: 0.5),
               ),
             ],
           ),

@@ -8,7 +8,7 @@ import 'room_sensor_stats.dart';
 
 class RoomDetailPager extends StatefulWidget {
   final String roomId;
-  // Dışarıdan gelen veriler (Refresh ile güncellenir)
+  // Dışarıdan gelen veriler
   final SensorData sensorData;
   final List<ForecastModel> forecasts;
 
@@ -26,8 +26,6 @@ class RoomDetailPager extends StatefulWidget {
 class _RoomDetailPagerState extends State<RoomDetailPager> {
   final PageController _controller = PageController();
   int _currentPage = 0;
-
-  // REPO ve TIMER KALDIRILDI (Artık veriyi üstten alıyor)
 
   @override
   void dispose() {
@@ -52,16 +50,17 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      // 1. Sayfa: Tahmin Grafiği (Forecast verisiyle)
+      // 1. Sayfa: Tahmin Grafiği
       RoomOccupancyChart(
         roomId: widget.roomId, 
         forecasts: widget.forecasts
       ),
       
-      // 2. Sayfa: Anlık Konfor (Sensor verisiyle)
+      // 2. Sayfa: Anlık Konfor Donut
+      // 'data' parametresi SensorData bekliyor
       RoomComfortDonut(data: widget.sensorData),
       
-      // 3. Sayfa: Anlık Detaylar (Sensor verisiyle)
+      // 3. Sayfa: Detaylı İstatistikler
       RoomSensorStats(data: widget.sensorData),
     ];
 
@@ -71,11 +70,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
         Expanded(
           child: PageView(
             controller: _controller,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
+            onPageChanged: (index) => setState(() => _currentPage = index),
             children: pages,
           ),
         ),
@@ -91,7 +86,7 @@ class _RoomDetailPagerState extends State<RoomDetailPager> {
                 onPressed: _currentPage > 0 ? _prevPage : null,
               ),
               
-              // Dots
+              // Nokta İndikatörleri
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(pages.length, (index) {

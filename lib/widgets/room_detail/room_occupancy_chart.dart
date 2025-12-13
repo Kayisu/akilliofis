@@ -17,15 +17,10 @@ class RoomOccupancyChart extends StatefulWidget {
 
 class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   int _selectedDayIndex = 0;
-  final List<String> _days = [
-    'PZT',
-    'SAL',
-    'ÇAR',
-    'PER',
-    'CUM',
-    'CMT',
-    'PAZ',
-  ]; // Hepsi büyük, teknik durur
+  int? _focusedIndex; // Hangi barın seçili olduğunu tutar
+
+  final List<String> _days = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'];
+  final List<String> _timeLabels = ['09:00', '11:00', '13:00', '15:00', '17:00'];
 
   List<ForecastModel> _getForecastsForDay(int dayIndex) {
     if (widget.forecasts.isEmpty) return [];
@@ -39,190 +34,176 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   Widget build(BuildContext context) {
     final dailyData = _getForecastsForDay(_selectedDayIndex);
 
-    // Veri hazırlığı (Aynı mantık)
-    final occupancyData =
-        dailyData.isEmpty
-            ? List.filled(5, 0.0)
-            : dailyData.take(5).map((e) => e.predictedOccupancy).toList();
+    final occupancyData = dailyData.isEmpty
+        ? List.filled(5, 0.0)
+        : dailyData.take(5).map((e) => e.predictedOccupancy).toList();
 
-    final comfortData =
-        dailyData.isEmpty
-            ? List.filled(5, 0.0)
-            : dailyData.take(5).map((e) => e.predictedComfort).toList();
+    final comfortData = dailyData.isEmpty
+        ? List.filled(5, 0.0)
+        : dailyData.take(5).map((e) => e.predictedComfort).toList();
 
-    while (occupancyData.length < 5) {
-      occupancyData.add(0.0);
-    }
-    while (comfortData.length < 5) {
-      comfortData.add(0.0);
-    }
-
-    final timeLabels = ['09:00', '11:00', '13:00', '15:00', '17:00'];
+    while (occupancyData.length < 5) occupancyData.add(0.0);
+    while (comfortData.length < 5) comfortData.add(0.0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       child: Column(
         children: [
-          // BAŞLIK (Zarif Tipografi)
-          Text(
-            "TAHMİNİ DOLULUK & KONFOR",
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withAlpha(102),
-              letterSpacing: 2.0, // Harf aralığı modernlik katar
-            ),
+          // 1. BAŞLIK (Dinamik Bilgi Alanı)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _buildHeaderInfo(occupancyData, comfortData),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
+          const Divider(color: Colors.white10),
+          const SizedBox(height: 20),
 
-          // --- GRAFİK ALANI ---
-          Expanded(
+          // 2. GRAFİK ALANI
+          SizedBox(
+            height: 220, 
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
                 final height = constraints.maxHeight;
-                // Barların yerleşimi
-                final barWidth =
-                    (width / timeLabels.length) * 0.3; // Biraz daha ince barlar
-
-                return Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    // ARKA PLAN ÇİZGİLERİ (Rehber olması için çok silik)
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(
-                        3,
-                        (index) => Container(
-                          height: 1,
-                          color: Colors.white.withAlpha(13),
-                          width: double.infinity,
-                        ),
+                final stepX = width / _timeLabels.length;
+                
+                return GestureDetector(
+                  // Boşluğa tıklayınca seçimi kaldır
+                  onTap: () => setState(() => _focusedIndex = null),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      // Arka Plan Çizgisi
+                      Positioned(
+                        top: height * 0.5,
+                        left: 0, right: 0,
+                        child: Container(height: 1, color: Colors.white.withAlpha(13)),
                       ),
-                    ),
 
-                    // 1. DOLULUK BARLARI (Gradient)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: List.generate(timeLabels.length, (index) {
-                        final occupancy = occupancyData[index];
-                        final maxBarHeight = height - 25; // Text için yer bırak
-                        final barHeight = (occupancy / 100) * maxBarHeight;
+                      // Barlar (Tıklanabilir Alanlar)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: List.generate(_timeLabels.length, (index) {
+                          final occupancy = occupancyData[index];
+                          final maxBarHeight = height - 30; 
+                          final barHeight = (occupancy * maxBarHeight).clamp(0.0, maxBarHeight);
+                          final isFocused = _focusedIndex == index;
 
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Container(
-                              width: barWidth,
-                              height: barHeight.clamp(0, maxBarHeight),
-                              decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(4),
-                                ),
-                                // DÜZ RENK YERİNE GRADIENT:
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.cyanAccent.withAlpha(
-                                      153,
-                                    ), // Üstte parlak
-                                    Colors.cyanAccent.withAlpha(
-                                      26,
-                                    ), // Alta doğru kayboluyor
-                                  ],
-                                ),
+                          return GestureDetector(
+                            onTapDown: (_) => setState(() => _focusedIndex = index),
+                            // Parmağını çekince seçimi kaldırmak istersen bu satırı aç:
+                            // onTapUp: (_) => setState(() => _focusedIndex = null),
+                            child: Container(
+                              color: Colors.transparent, // Tıklama alanını genişletir
+                              width: stepX, 
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  // Bar
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: isFocused ? 28 : 24, // Seçilince kalınlaşır
+                                    height: barHeight == 0 ? 4 : barHeight,
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                      border: isFocused ? Border.all(color: Colors.white, width: 1) : null, // Seçilince beyaz çerçeve
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          const Color(0xFF26C6DA).withOpacity(isFocused ? 1.0 : 0.6), 
+                                          const Color(0xFF26C6DA).withOpacity(0.1), 
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Saat Etiketi
+                                  Text(
+                                    _timeLabels[index],
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isFocused ? FontWeight.bold : FontWeight.w400,
+                                      color: isFocused ? Colors.white : Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              timeLabels[index],
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w300, // İnce font
-                                color: Colors.white.withAlpha(153),
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
+                          );
+                        }),
+                      ),
 
-                    // 2. KONFOR ÇİZGİSİ (CustomPainter - Zarif)
-                    Positioned.fill(
-                      bottom: 25, // Text alanı kadar yukarı
-                      child: CustomPaint(
-                        painter: _ElegantComfortLinePainter(
-                          data: comfortData,
-                          color: Colors.orangeAccent,
-                          pointsCount: timeLabels.length,
+                      // Konfor Çizgisi
+                      Positioned.fill(
+                        bottom: 30, 
+                        child: IgnorePointer( // Çizgi tıklamayı engellemesin
+                          child: CustomPaint(
+                            painter: _ComfortLinePainter(
+                              data: comfortData,
+                              color: const Color(0xFFFFB74D), 
+                              pointsCount: _timeLabels.length,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
 
-          // --- LEJANT (Minimalist) ---
+          // 3. LEJANT
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem(Colors.cyanAccent, "Doluluk"),
+              _buildLegendDot(const Color(0xFF26C6DA), "DOLULUK"),
               Container(
-                width: 1,
-                height: 12,
-                color: Colors.white10,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
+                height: 12, width: 1, color: Colors.white24,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
-              _buildLegendItem(Colors.orangeAccent, "Konfor"),
+              _buildLegendDot(const Color(0xFFFFB74D), "KONFOR"),
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
 
-          // --- GÜN SEÇİCİ (Zarif Kapsül Tasarım) ---
+          // 4. GÜN SEÇİCİ
           Container(
-            padding: const EdgeInsets.all(4),
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(13),
-              borderRadius: BorderRadius.circular(16), // Tam yuvarlak köşeler
+              color: Colors.white.withOpacity(0.08), 
+              borderRadius: BorderRadius.circular(25), 
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(_days.length, (index) {
                 final isSelected = _selectedDayIndex == index;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? const Color(0xFFD1C4E9) // Lila (Seçili)
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _days[index],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color:
-                              isSelected
-                                  ? Colors.black
-                                  : Colors.white.withAlpha(128),
-                          letterSpacing: 0.5,
-                        ),
+                return GestureDetector(
+                  onTap: () => setState(() { 
+                    _selectedDayIndex = index;
+                    _focusedIndex = null; // Gün değişince seçimi sıfırla
+                  }),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFFE1BEE7) : Colors.transparent, 
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _days[index],
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? Colors.black : Colors.white.withOpacity(0.6),
                       ),
                     ),
                   ),
@@ -235,22 +216,61 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
     );
   }
 
-  Widget _buildLegendItem(Color color, String text) {
+  // Dinamik Başlık Widget'ı
+  Widget _buildHeaderInfo(List<double> occupancyData, List<double> comfortData) {
+    // Eğer hiçbir şeye basılmadıysa varsayılan başlık
+    if (_focusedIndex == null) {
+      return Text(
+        "TAHMİNİ DOLULUK & KONFOR",
+        key: const ValueKey('default'),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white.withOpacity(0.4),
+          letterSpacing: 1.5,
+        ),
+      );
+    }
+
+    // Basıldıysa detayları göster
+    final occ = (occupancyData[_focusedIndex!] * 100).toInt();
+    final comf = (comfortData[_focusedIndex!] * 100).toInt();
+    final time = _timeLabels[_focusedIndex!];
+
+    return Row(
+      key: const ValueKey('focused'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "$time  •  ",
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        Text(
+          "DOLULUK %$occ",
+          style: const TextStyle(color: Color(0xFF26C6DA), fontWeight: FontWeight.bold),
+        ),
+        Container(width: 1, height: 10, color: Colors.white54, margin: const EdgeInsets.symmetric(horizontal: 8)),
+        Text(
+          "KONFOR %$comf",
+          style: const TextStyle(color: Color(0xFFFFB74D), fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
     return Row(
       children: [
         Container(
-          width: 6,
-          height: 6,
+          width: 8, height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
-          text.toUpperCase(),
+          label,
           style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: Colors.white.withAlpha(153),
-            letterSpacing: 1.0,
+            fontSize: 11, fontWeight: FontWeight.w600,
+            color: Colors.white.withOpacity(0.6), letterSpacing: 1.0,
           ),
         ),
       ],
@@ -258,70 +278,47 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   }
 }
 
-// Zarif Çizgi Çizici
-class _ElegantComfortLinePainter extends CustomPainter {
+// --- ÖZEL ÇİZİM SINIFI (Aynı kaldı) ---
+class _ComfortLinePainter extends CustomPainter {
   final List<double> data;
   final Color color;
   final int pointsCount;
 
-  _ElegantComfortLinePainter({
-    required this.data,
-    required this.color,
-    required this.pointsCount,
-  });
+  _ComfortLinePainter({required this.data, required this.color, required this.pointsCount});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = color
-          ..strokeWidth =
-              2.0 // Daha ince çizgi
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
+    if (data.isEmpty) return;
 
-    final dotPaintFill =
-        Paint()
-          ..color = const Color(
-            0xFF1E1E1E,
-          ) // Arka plan rengi (veya siyah) ile aynı olmalı ki "içi boş" görünsün
-          ..style = PaintingStyle.fill;
+    final paintLine = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    final dotPaintBorder =
-        Paint()
-          ..color = color
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke;
+    final paintDotFill = Paint()..color = const Color(0xFF121212)..style = PaintingStyle.fill;
+    final paintDotBorder = Paint()..color = color..strokeWidth = 2.0..style = PaintingStyle.stroke;
 
     final path = Path();
     final stepX = size.width / pointsCount;
     final startOffset = stepX / 2;
 
-    // Noktaları hesapla
     List<Offset> points = [];
     for (int i = 0; i < data.length; i++) {
       final x = startOffset + (i * stepX);
-      final availableHeight = size.height * 0.9; // Biraz padding
-      // 1.0 en üstte
-      final y = (size.height * 0.05) + ((1.0 - data[i]) * availableHeight);
+      final y = size.height - (data[i] * size.height);
       points.add(Offset(x, y));
     }
 
-    // Çizgiyi çiz (Düz çizgiler daha teknik durur, ama yumuşatmak istersek buraya curve ekleriz)
-    if (points.isNotEmpty) {
-      path.moveTo(points[0].dx, points[0].dy);
-      for (int i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
-      canvas.drawPath(path, paint);
+    path.moveTo(points[0].dx, points[0].dy);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
     }
+    canvas.drawPath(path, paintLine);
 
-    // Noktaları çiz (İçi boş halkalar - "Hollow Dots")
     for (var point in points) {
-      // Önce içini temizle (arka plan rengiyle boya)
-      canvas.drawCircle(point, 3.5, dotPaintFill);
-      // Sonra kenarını boya
-      canvas.drawCircle(point, 3.5, dotPaintBorder);
+      canvas.drawCircle(point, 4.0, paintDotFill);
+      canvas.drawCircle(point, 4.0, paintDotBorder);
     }
   }
 
