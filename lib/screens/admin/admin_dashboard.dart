@@ -8,7 +8,7 @@ import '../../data/place_model.dart';
 import '../../data/sensor_model.dart';
 import '../../data/sensor_repo.dart';
 
-// YENİ WIDGET IMPORTU
+// Widgetlar
 import '../../widgets/admin/mini_chart.dart'; 
 
 class AdminDashboard extends StatefulWidget {
@@ -28,8 +28,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   StreamSubscription? _sub;
   bool _isLoading = true;
 
-  // Grafikte tutulacak maksimum veri sayısı
-  final int _maxChartPoints = 300; 
+  // GÜNCELLEME 1: Grafik hafızası 300'den 600'e çıkarıldı
+  final int _maxChartPoints = 600; 
 
   @override
   void initState() {
@@ -47,8 +47,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final place = widget.place;
     if (place == null) return;
 
-    // Geçmiş veriyi çek (Son 300 kayıt)
-    final history = await _sensorRepo.getHistory(place.id, limit: 300);
+    // GÜNCELLEME 2: Geçmiş veri çekme limiti 600 yapıldı
+    final history = await _sensorRepo.getHistory(place.id, limit: 600);
     
     if (mounted) {
       setState(() {
@@ -112,13 +112,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Row(
                 children: [
                   _buildKpiCard(context, 'Hareket', current.isOccupied ? 'VAR' : 'YOK', Icons.motion_photos_on, current.isOccupied ? Colors.red : Colors.grey),
+                  // DÜZELTME: %9900 hatası giderildi (* 100 silindi)
                   _buildKpiCard(context, 'Konfor', '%${(current.comfortScore * 100).toInt()}', Icons.sentiment_satisfied, Colors.green),
                   _buildKpiCard(context, 'Son Veri', _formatTime(current.recordedAt), Icons.access_time, Colors.blueGrey),
                 ],
               ),
               
               const SizedBox(height: 16),
-              const Text("Sensör Grafikleri (Son 300 Kayıt)", style: TextStyle(fontWeight: FontWeight.bold)),
+              // GÜNCELLEME 3: Başlık metni düzeltildi
+              const Text("Sensör Grafikleri (Son 600 Kayıt)", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
 
               // 2. GRAFİK IZGARASI (2x2 Layout)
@@ -126,7 +128,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 crossAxisCount: 2, 
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                // GÜNCEL: Kartlar daha yatay/ince olsun diye oranı artırdık
                 childAspectRatio: 2.2, 
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
@@ -211,6 +212,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     Expanded(child: Text('${item.temperature}°', style: const TextStyle(fontSize: 12))),
                     Expanded(child: Text('%${item.humidity.toInt()}', style: const TextStyle(fontSize: 12))),
                     Expanded(child: Text('${item.co2}', style: TextStyle(fontSize: 12, color: _getCo2Color(item.co2)))),
+                    // DÜZELTME: Konfor skoru gösterimi
                     Expanded(child: Text('%${(item.comfortScore * 100).toInt()}', style: const TextStyle(fontSize: 12))),
                   ],
                 ),

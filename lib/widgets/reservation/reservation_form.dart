@@ -1,4 +1,3 @@
-// lib/widgets/reservation/reservation_form.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/place_model.dart';
@@ -18,6 +17,9 @@ class ReservationForm extends StatefulWidget {
 class _ReservationFormState extends State<ReservationForm> {
   final _repo = ReservationRepo();
   
+  // YENİ: Kişi sayısı girişi için controller
+  final TextEditingController _countController = TextEditingController(text: '1');
+  
   late DateTime _selectedDate;
   
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
@@ -27,7 +29,14 @@ class _ReservationFormState extends State<ReservationForm> {
   @override
   void initState() {
     super.initState();
+    // Varsayılan olarak yarına tarih atıyoruz
     _selectedDate = DateTime.now().add(const Duration(days: 1));
+  }
+
+  @override
+  void dispose() {
+    _countController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickDate() async {
@@ -57,13 +66,33 @@ class _ReservationFormState extends State<ReservationForm> {
   }
 
   Future<void> _handleSave() async {
-    // 1. Basit Validasyonlar
+    // 1. Validasyonlar
     final startVal = _startTime.hour * 60 + _startTime.minute;
     final endVal = _endTime.hour * 60 + _endTime.minute;
 
     if (endVal <= startVal) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bitiş saati başlangıçtan sonra olmalı.')),
+      );
+      return;
+    }
+
+    // Kişi Sayısı Validasyonu
+    final count = int.tryParse(_countController.text);
+    if (count == null || count < 1) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen geçerli bir kişi sayısı giriniz.')),
+      );
+      return;
+    }
+
+    // Kapasite Kontrolü
+    if (count > widget.place.capacity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kişi sayısı odanın kapasitesini (${widget.place.capacity}) aşamaz!'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -80,7 +109,7 @@ class _ReservationFormState extends State<ReservationForm> {
         _endTime.hour, _endTime.minute,
       );
 
-      // 2. ÇAKIŞMA KONTROLÜ (YENİ)
+      // 2. ÇAKIŞMA KONTROLÜ
       final hasOverlap = await _repo.checkOverlap(widget.place.id, startDt, endDt);
       if (hasOverlap) {
         if (mounted) {
@@ -91,7 +120,7 @@ class _ReservationFormState extends State<ReservationForm> {
             ),
           );
         }
-        return; // İşlemi durdur
+        return; 
       }
 
       // 3. Rezervasyon Oluşturma
@@ -100,6 +129,9 @@ class _ReservationFormState extends State<ReservationForm> {
         userId: AuthService.instance.userId,
         startTs: startDt,
         endTs: endDt,
+        attendeeCount: count, // Modele eklenen yeni alan
+        // status varsayılan olarak 'pending' gidecek
+        // isHidden varsayılan olarak false gidecek
       );
 
       await _repo.createReservation(reservation);
@@ -125,6 +157,7 @@ class _ReservationFormState extends State<ReservationForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // TARİH SEÇİMİ
         ListTile(
           title: const Text('Tarih'),
           subtitle: Text('${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}'),
@@ -134,6 +167,8 @@ class _ReservationFormState extends State<ReservationForm> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         const SizedBox(height: 16),
+        
+        // SAAT SEÇİMİ
         Row(
           children: [
             Expanded(
@@ -157,15 +192,43 @@ class _ReservationFormState extends State<ReservationForm> {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+
+        // YENİ: KİŞİ SAYISI GİRİŞİ
+        TextFormField(
+          controller: _countController,
+          keyboardType: TextInputType.number,
+          enabled: !_isLoading,
+          decoration: InputDecoration(
+            labelText: 'Kişi Sayısı',
+            hintText: 'Kaç kişi kullanacak?',
+            suffixText: '/ ${widget.place.capacity}', // Kullanıcıya kapasiteyi gösterir
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefixIcon: const Icon(Icons.people),
+            filled: true,
+            fillColor: Colors.grey.withAlpha(10),
+          ),
+        ),
+
         const Spacer(),
+        
+        // KAYDET BUTONU
         SizedBox(
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
             onPressed: _isLoading ? null : _handleSave,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
+            ),
             child: _isLoading 
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Text('Rezervasyonu Onayla'),
+                ? const SizedBox(
+                    width: 24, 
+                    height: 24, 
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                : const Text('Rezervasyonu Onayla', style: TextStyle(fontSize: 16)),
           ),
         ),
       ],

@@ -67,12 +67,14 @@ class MiniChart extends StatelessWidget {
           Expanded(
             child: LineChart(
               LineChartData(
+                clipData: FlClipData.all(),
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
                 lineTouchData: const LineTouchData(enabled: false), // Etkileşim kapalı
                 lineBarsData: [
                   LineChartBarData(
+                    
                     spots: spots,
                     isCurved: true,
                     color: color,

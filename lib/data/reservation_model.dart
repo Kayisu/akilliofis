@@ -6,8 +6,9 @@ class ReservationModel {
   final String userId;
   final DateTime startTs;
   final DateTime endTs;
-  final String status; // pending, approved, rejected, cancelled, completed
-  final bool isHidden; // YENİ: Kullanıcı listesinden gizlemek için
+  final String status;
+  final bool isHidden;
+  final int attendeeCount; // YENİ ALAN
 
   // Join ile gelen veriler
   final String? placeName;
@@ -20,7 +21,8 @@ class ReservationModel {
     required this.startTs,
     required this.endTs,
     this.status = 'pending',
-    this.isHidden = false, // Varsayılan görünür
+    this.isHidden = false,
+    this.attendeeCount = 1, // Varsayılan 1 kişi
     this.placeName,
     this.userName,
   });
@@ -33,11 +35,11 @@ class ReservationModel {
       'end_ts': endTs.toUtc().toIso8601String(),
       'status': status,
       'is_hidden': isHidden,
+      'attendee_count': attendeeCount, // YENİ
     };
   }
 
   factory ReservationModel.fromRecord(RecordModel record) {
-    // Expand verilerini güvenli çekelim
     final expand = record.expand;
     String? pName;
     String? uName;
@@ -59,7 +61,8 @@ class ReservationModel {
       startTs: DateTime.parse(record.data['start_ts']),
       endTs: DateTime.parse(record.data['end_ts']),
       status: record.data['status'] ?? 'pending',
-      isHidden: record.data['is_hidden'] ?? false, // DB'den oku
+      isHidden: record.data['is_hidden'] ?? false,
+      attendeeCount: record.data['attendee_count'] ?? 1, // YENİ
       placeName: pName,
       userName: uName,
     );
