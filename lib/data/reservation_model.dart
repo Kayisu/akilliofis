@@ -1,11 +1,16 @@
+import 'package:pocketbase/pocketbase.dart';
+
 class ReservationModel {
   final String? id;
   final String placeId;
   final String userId;
   final DateTime startTs;
   final DateTime endTs;
-  final String status;
-  final String? placeName; 
+  final String status; // pending, approved, rejected, cancelled, completed
+  final bool isHidden; // YENİ: Kullanıcı listesinden gizlemek için
+
+  // Join ile gelen veriler
+  final String? placeName;
   final String? userName;
 
   ReservationModel({
@@ -15,6 +20,7 @@ class ReservationModel {
     required this.startTs,
     required this.endTs,
     this.status = 'pending',
+    this.isHidden = false, // Varsayılan görünür
     this.placeName,
     this.userName,
   });
@@ -26,41 +32,34 @@ class ReservationModel {
       'start_ts': startTs.toUtc().toIso8601String(),
       'end_ts': endTs.toUtc().toIso8601String(),
       'status': status,
+      'is_hidden': isHidden,
     };
   }
 
-  factory ReservationModel.fromRecord(dynamic record) {
-    final data = record is Map<String, dynamic> ? record : record.data;
-    final String rId = record is Map<String, dynamic> ? record['id'] : record.id;
-    
-    // Expand verisini güvenli şekilde çekme
+  factory ReservationModel.fromRecord(RecordModel record) {
+    // Expand verilerini güvenli çekelim
+    final expand = record.expand;
     String? pName;
-    if (record.expand != null && record.expand.containsKey('place_id')) {
-      final placeData = record.expand['place_id'];
-      if (placeData is List && placeData.isNotEmpty) {
-        pName = placeData.first.data['name'];
-      } else if (placeData is Map) {
-        pName = placeData['name'];
-      }
-    }
-
     String? uName;
-    if (record.expand != null && record.expand.containsKey('user_id')) {
-      final userData = record.expand['user_id'];
-      if (userData is List && userData.isNotEmpty) {
-        uName = userData.first.data['fullName'];
-      } else if (userData is Map) {
-        uName = userData['fullName'];
-      }
+
+    if (expand.containsKey('place_id')) {
+      final places = expand['place_id'] as List<RecordModel>;
+      if (places.isNotEmpty) pName = places.first.data['name'];
+    }
+    
+    if (expand.containsKey('user_id')) {
+      final users = expand['user_id'] as List<RecordModel>;
+      if (users.isNotEmpty) uName = users.first.data['fullName'];
     }
 
     return ReservationModel(
-      id: rId,
-      placeId: data['place_id'] ?? '',
-      userId: data['user_id'] ?? '',
-      startTs: DateTime.parse(data['start_ts']),
-      endTs: DateTime.parse(data['end_ts']),
-      status: data['status'] ?? 'pending',
+      id: record.id,
+      placeId: record.data['place_id'] ?? '',
+      userId: record.data['user_id'] ?? '',
+      startTs: DateTime.parse(record.data['start_ts']),
+      endTs: DateTime.parse(record.data['end_ts']),
+      status: record.data['status'] ?? 'pending',
+      isHidden: record.data['is_hidden'] ?? false, // DB'den oku
       placeName: pName,
       userName: uName,
     );

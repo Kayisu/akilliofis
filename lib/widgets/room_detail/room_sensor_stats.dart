@@ -11,32 +11,32 @@ class RoomSensorStats extends StatelessWidget {
     // Yüzdelik hesaplama
     final int comfortPercent = (data.comfortScore * 100).toInt();
 
-    // Konfor Mantığı (İstediğin gibi revize edildi)
+    // Konfor Mantığı (RoomComfortDonut ile eşitlendi)
     Color comfortColor;
     IconData comfortIcon;
     String comfortText;
 
     if (comfortPercent <= 30) {
-      comfortColor = Colors.black; // Veya koyu gri (Dark modda görünmesi için)
-      comfortIcon = Icons.sentiment_very_dissatisfied; // Ölü gibi
+      comfortColor = Colors.grey.shade800;
+      comfortIcon = Icons.sentiment_very_dissatisfied;
       comfortText = "Kötü";
-    } else if (comfortPercent <= 55) {
+    } else if (comfortPercent <= 40) {
       comfortColor = Colors.redAccent;
-      comfortIcon = Icons.sentiment_dissatisfied; // Üzgün
+      comfortIcon = Icons.sentiment_dissatisfied;
       comfortText = "Rahatsız";
-    } else if (comfortPercent <= 70) {
-      comfortColor = Colors.yellowAccent; // Sarı
-      comfortIcon = Icons.sentiment_neutral; // Durgun
+    } else if (comfortPercent <= 50) {
+      comfortColor = Colors.yellowAccent;
+      comfortIcon = Icons.sentiment_neutral;
       comfortText = "İdare Eder";
+    } else if (comfortPercent <= 85) {
+      comfortColor = Colors.lightGreenAccent;
+      comfortIcon = Icons.sentiment_satisfied;
+      comfortText = "İyi";
     } else {
-      comfortColor = Colors.greenAccent; // Yeşil
-      comfortIcon = Icons.sentiment_very_satisfied; // Mutlu
+      comfortColor = Colors.greenAccent;
+      comfortIcon = Icons.sentiment_very_satisfied;
       comfortText = "Mükemmel";
     }
-    
-    // Eğer siyah zemin kullanıyorsak siyah ikon görünmez, onu koyu gri yapalım
-    // veya özel bir "ölü" efekti için gri tonu kullanalım.
-    if (comfortColor == Colors.black) comfortColor = Colors.grey.shade800;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -55,7 +55,7 @@ class RoomSensorStats extends StatelessWidget {
                 context,
                 title: "Sıcaklık",
                 value: "${data.temperature}°",
-                icon: Icons.thermostat_outlined, // Outlined ikonlar daha zariftir
+                icon: Icons.thermostat_outlined,
                 color: _getTempColor(data.temperature),
               ),
               _buildStatCard(
@@ -70,7 +70,7 @@ class RoomSensorStats extends StatelessWidget {
                 title: "CO₂",
                 value: "${data.co2}",
                 unit: "ppm",
-                icon: Icons.cloud_queue, // Daha ince bulut ikonu
+                icon: Icons.cloud_queue,
                 color: _getCo2Color(data.co2),
               ),
               _buildStatCard(
@@ -90,7 +90,6 @@ class RoomSensorStats extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              // Hafif gradient veya düz renk
               color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(50),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withAlpha(10)),
@@ -105,7 +104,7 @@ class RoomSensorStats extends StatelessWidget {
                       "GENEL KONFOR",
                       style: TextStyle(
                         fontSize: 10,
-                        letterSpacing: 1.5, // Harf aralığı modernlik katar
+                        letterSpacing: 1.5,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey.shade400,
                       ),
@@ -119,7 +118,7 @@ class RoomSensorStats extends StatelessWidget {
                           "%$comfortPercent",
                           style: TextStyle(
                             fontSize: 32,
-                            fontWeight: FontWeight.w300, // İnce font (Thin/Light)
+                            fontWeight: FontWeight.w300,
                             color: comfortColor,
                           ),
                         ),
@@ -155,22 +154,21 @@ class RoomSensorStats extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(40), // Daha şeffaf
-        borderRadius: BorderRadius.circular(20), // Daha yuvarlak köşeler
-        border: Border.all(color: Colors.white.withAlpha(15)), // Çok ince kenarlık
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(40),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(15)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Üst Kısım: İkon ve Başlık
           Row(
             children: [
               Icon(icon, color: color.withAlpha(204), size: 18),
               const SizedBox(width: 8),
               Text(
-                title.toUpperCase(), // Büyük harf her zaman daha "teknik" durur
+                title.toUpperCase(),
                 style: TextStyle(
                   color: Colors.grey.shade500, 
                   fontSize: 10, 
@@ -181,7 +179,6 @@ class RoomSensorStats extends StatelessWidget {
             ],
           ),
           
-          // Alt Kısım: Değer
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -190,7 +187,7 @@ class RoomSensorStats extends StatelessWidget {
                 value,
                 style: const TextStyle(
                   fontSize: 24, 
-                  fontWeight: FontWeight.w300, // Light font
+                  fontWeight: FontWeight.w300, 
                   color: Colors.white
                 ),
               ),
@@ -211,7 +208,7 @@ class RoomSensorStats extends StatelessWidget {
     );
   }
 
-  // Renk mantıkları (Aynı)
+  // Renk mantıkları
   Color _getTempColor(double temp) {
     if (temp < 18) return Colors.cyanAccent;
     if (temp > 28) return Colors.redAccent;

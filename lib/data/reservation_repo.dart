@@ -12,9 +12,10 @@ class ReservationRepo {
   }
 
   Future<List<ReservationModel>> getMyReservations(String userId) async {
+    // İptal edilenleri gösterme (status != cancelled)
+    // Kullanıcının gizlediklerini gösterme (is_hidden = false)
     final records = await _pb.collection('reservations').getFullList(
-      // Sadece iptal edilmemişleri (pending, approved) getir ki liste temiz kalsın
-      filter: 'user_id = "$userId" && status != "cancelled"',
+      filter: 'user_id = "$userId" && status != "cancelled" && is_hidden = false',
       sort: '-start_ts',
       expand: 'place_id',
     );
@@ -22,36 +23,83 @@ class ReservationRepo {
   }
 
   Future<List<ReservationModel>> getAdminReservations({String? filterStatus}) async {
-    String filter = 'status != "cancelled"'; // İptalleri admin de görmesin (veya görsün istersen sil)
+    String filter = ''; 
     
     if (filterStatus != null) {
-      filter += ' && status = "$filterStatus"';
+      // Eğer özel bir durum isteniyorsa (örn: sadece pending) onu filtrele
+      filter = 'status = "$filterStatus"';
     }
 
     final records = await _pb.collection('reservations').getFullList(
-      filter: filter,
-      sort: '-start_ts', // En yeni en üstte
-      expand: 'place_id,user_id', // Hem odayı hem kullanıcıyı çekiyoruz
+      filter: filter.isNotEmpty ? filter : null,
+      sort: '-start_ts', 
+      expand: 'place_id,user_id', 
     );
     
     return records.map((e) => ReservationModel.fromRecord(e)).toList();
   }
 
   Future<void> updateStatus(String id, String newStatus) async {
-    final body = {
-      'status': newStatus,
-    };
+    final body = { 'status': newStatus };
+    await _pb.collection('reservations').update(id, body: body);
+  }
+
+  // Kullanıcı "İptal Et" dediğinde bu çalışacak (Soft Delete)
+  Future<void> hideReservation(String id) async {
+    final body = { 'is_hidden': true };
     await _pb.collection('reservations').update(id, body: body);
   }
 
   Future<void> cancelReservation(String id) async {
-    final body = {
-      'status': 'cancelled', // Statüyü 'cancelled' yapıyoruz
-    };
+    final body = { 'status': 'cancelled' };
     await _pb.collection('reservations').update(id, body: body);
   }
-
+  
+  // deleteReservation'a artık kullanıcının ihtiyacı yok, ama admin için durabilir.
   Future<void> deleteReservation(String id) async {
     await _pb.collection('reservations').delete(id);
+  }
+
+  Future<bool> checkOverlap(String placeId, DateTime start, DateTime end) async {
+    final startStr = start.toUtc().toIso8601String();
+    final endStr = end.toUtc().toIso8601String();
+
+    final filter = 
+      'place_id = "$placeId" && '
+      'status != "cancelled" && status != "rejected" && status != "completed" && '
+      'start_ts < "$endStr" && end_ts > "$startStr"';
+
+    final result = await _pb.collection('reservations').getList(
+      page: 1, perPage: 1, filter: filter,
+    );
+    return result.items.isNotEmpty;
+  }
+
+  Future<void> processExpiredReservations() async {
+    final nowStr = DateTime.now().toUtc().toIso8601String();
+    
+    // Süresi dolmuş ama hala "pending" veya "approved" olanları bul
+    final filter = 'end_ts < "$nowStr" && (status = "pending" || status = "approved")';
+
+    try {
+      final records = await _pb.collection('reservations').getFullList(filter: filter);
+      
+      for (var record in records) {
+        String newStatus;
+        
+        // MANTIK: 
+        // Eğer süresi dolana kadar 'pending' (beklemede) kaldıysa -> REJECTED (Zaman aşımı)
+        // Eğer 'approved' (onaylı) ise -> COMPLETED (Başarıyla tamamlandı)
+        if (record.data['status'] == 'pending') {
+          newStatus = 'rejected';
+        } else {
+          newStatus = 'completed';
+        }
+
+        await _pb.collection('reservations').update(record.id, body: {'status': newStatus});
+      }
+    } catch (e) {
+      print("Expire check error: $e");
+    }
   }
 }

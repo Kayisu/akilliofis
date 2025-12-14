@@ -1,5 +1,5 @@
+import 'package:flutter/material.dart'; // Widget ve Colors için şart
 import 'package:go_router/go_router.dart';
-//import 'package:flutter/material.dart'; 
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import '../auth/auth_service.dart';
@@ -15,10 +15,9 @@ import '../screens/admin/admin_reservations.dart';
 
 class AppRouter {
   static final router = GoRouter(
-    initialLocation: AuthService.instance.isAuthenticated
-        ? (AuthService.instance.isAdmin ? '/admin/places' : '/home') 
-        : '/login',
-        
+    initialLocation: '/login', // Başlangıç her zaman login olsun, redirect çözer
+    refreshListenable: AuthService.instance, // Artık hata vermez
+    
     routes: [
       GoRoute(
         path: '/login',
@@ -29,17 +28,21 @@ class AppRouter {
         builder: (context, state) => const RegisterScreen(),
       ),
       
-      // --- NORMAL KULLANICI ROTASI ---
+      // --- NORMAL KULLANICI (HomeShell kendi içinde tab yönetiyor) ---
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeShell(),
       ),
-      // Diğer kullanıcı alt sayfaları (room-detail vb.) burada kalabilir...
+      
+      // --- DETAY SAYFALARI ---
       GoRoute(
         path: '/room-detail',
         builder: (context, state) {
-          final place = state.extra as dynamic;
-          return RoomDetailScreen(place: place);
+          // Tip güvenliği için kontrol
+          if (state.extra is PlaceModel) {
+            return RoomDetailScreen(place: state.extra as PlaceModel);
+          }
+          return const Scaffold(body: Center(child: Text("Hatalı Oda Verisi")));
         },
       ),
       GoRoute(
@@ -54,18 +57,16 @@ class AppRouter {
         builder: (context, state) => const ProfileEditScreen(),
       ),
 
-      // --- ADMIN ROTASI (ShellRoute) ---
+      // --- ADMIN ROTASI (ShellRoute kullanıyoruz çünkü AdminShell child alıyor) ---
       ShellRoute(
         builder: (context, state, child) {
           return AdminShell(child: child);
         },
         routes: [
-          // YENİ ANA SAYFA: Places
           GoRoute(
             path: '/admin/places',
             builder: (context, state) => const AdminPlacesScreen(),
           ),
-          // DASHBOARD (PlaceModel alır)
           GoRoute(
             path: '/admin/dashboard',
             builder: (context, state) {
@@ -75,7 +76,7 @@ class AppRouter {
           ),
           GoRoute(
             path: '/admin/reservations',
-            builder: (context, state) => const AdminReservations(), // Artık gerçek ekranı çağırıyoruz
+            builder: (context, state) => const AdminReservations(),
           ),
         ],
       ),
@@ -85,31 +86,25 @@ class AppRouter {
       final isLoggedIn = AuthService.instance.isAuthenticated;
       final isAdmin = AuthService.instance.isAdmin;
       
-      final isLoggingIn = state.uri.toString() == '/login';
-      final isRegistering = state.uri.toString() == '/register';
-      final isGoingToAdmin = state.uri.toString().startsWith('/admin');
+      final location = state.uri.toString();
+      final isLoggingIn = location == '/login';
+      final isRegistering = location == '/register';
+      final isGoingToAdmin = location.startsWith('/admin');
 
-      // 1. Giriş yapmamışsa Login'e gönder
+      // 1. Giriş yapmamışsa ve Login/Register değilse -> Login
       if (!isLoggedIn && !isLoggingIn && !isRegistering) return '/login';
 
-      // 2. Giriş yapmışsa ve Login/Register sayfasındaysa yönlendir
+      // 2. Giriş yapmış ama hala Login/Register sayfalarındaysa
       if (isLoggedIn && (isLoggingIn || isRegistering)) {
-        // BURAYI DÜZELTTİK: Admin ise Places'a, değilse Home'a
         return isAdmin ? '/admin/places' : '/home';
       }
 
-      // 3. Yetki Kontrolü: Normal kullanıcı Admin sayfasına girmeye çalışırsa
+      // 3. Normal kullanıcı Admin'e girmeye çalışırsa -> Home
       if (isLoggedIn && !isAdmin && isGoingToAdmin) {
         return '/home';
       }
 
-      // 4. Yetki Kontrolü: Admin normal anasayfaya girmeye çalışırsa
-      // (Eğer admin mobildeki arayüzü de görsün derseniz burayı silebilirsiniz)
-      if (isLoggedIn && isAdmin && state.uri.toString() == '/home') {
-        return '/admin/places'; // Dashboard değil Places'a atıyoruz
-      }
-
-      return null;
+      return null; // Değişiklik yok
     },
   );
 }

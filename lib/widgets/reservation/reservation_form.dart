@@ -18,7 +18,6 @@ class ReservationForm extends StatefulWidget {
 class _ReservationFormState extends State<ReservationForm> {
   final _repo = ReservationRepo();
   
-  // Başlangıç değerini 'late' yaptık çünkü initState'de atayacağız
   late DateTime _selectedDate;
   
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
@@ -28,20 +27,18 @@ class _ReservationFormState extends State<ReservationForm> {
   @override
   void initState() {
     super.initState();
-    // Uygulama açıldığında varsayılan tarih "Yarın" olsun
     _selectedDate = DateTime.now().add(const Duration(days: 1));
   }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    // En erken seçilebilecek tarih: Yarın
     final tomorrow = now.add(const Duration(days: 1));
 
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: tomorrow, // Bugünü ve geçmişi devre dışı bırakır
-      lastDate: now.add(const Duration(days: 30)), // Örn: 30 gün sonrasına kadar
+      firstDate: tomorrow,
+      lastDate: now.add(const Duration(days: 30)),
     );
     
     if (picked != null) {
@@ -60,7 +57,7 @@ class _ReservationFormState extends State<ReservationForm> {
   }
 
   Future<void> _handleSave() async {
-    // Validasyon: Bitiş saati Başlangıçtan sonra olmalı
+    // 1. Basit Validasyonlar
     final startVal = _startTime.hour * 60 + _startTime.minute;
     final endVal = _endTime.hour * 60 + _endTime.minute;
 
@@ -74,7 +71,6 @@ class _ReservationFormState extends State<ReservationForm> {
     setState(() => _isLoading = true);
 
     try {
-      // DateTime nesnelerini oluştur (Tarih + Saat)
       final startDt = DateTime(
         _selectedDate.year, _selectedDate.month, _selectedDate.day,
         _startTime.hour, _startTime.minute,
@@ -84,6 +80,21 @@ class _ReservationFormState extends State<ReservationForm> {
         _endTime.hour, _endTime.minute,
       );
 
+      // 2. ÇAKIŞMA KONTROLÜ (YENİ)
+      final hasOverlap = await _repo.checkOverlap(widget.place.id, startDt, endDt);
+      if (hasOverlap) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bu saat aralığı dolu! Lütfen başka bir saat seçin.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return; // İşlemi durdur
+      }
+
+      // 3. Rezervasyon Oluşturma
       final reservation = ReservationModel(
         placeId: widget.place.id,
         userId: AuthService.instance.userId,
@@ -97,7 +108,7 @@ class _ReservationFormState extends State<ReservationForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Rezervasyon başarıyla oluşturuldu!')),
         );
-        context.pop(); // Formu kapat, önceki ekrana dön
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -114,7 +125,6 @@ class _ReservationFormState extends State<ReservationForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Tarih Seçimi
         ListTile(
           title: const Text('Tarih'),
           subtitle: Text('${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}'),
@@ -124,8 +134,6 @@ class _ReservationFormState extends State<ReservationForm> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         const SizedBox(height: 16),
-        
-        // Saat Seçimi (Yan yana)
         Row(
           children: [
             Expanded(
@@ -149,10 +157,7 @@ class _ReservationFormState extends State<ReservationForm> {
             ),
           ],
         ),
-        
         const Spacer(),
-        
-        // Kaydet Butonu
         SizedBox(
           width: double.infinity,
           height: 50,

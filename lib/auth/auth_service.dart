@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart'; // ChangeNotifier için gerekli
 import 'package:pocketbase/pocketbase.dart';
 import '../core/pb_client.dart';
 
-class AuthService {
+// ChangeNotifier ekledik ki Router bunu dinleyebilsin
+class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   static AuthService get instance => _instance;
 
@@ -12,12 +14,19 @@ class AuthService {
   bool get isAuthenticated => _pb.authStore.isValid;
   String get userId => _pb.authStore.model?.id ?? '';
   
-  // Kullanıcı modeline erişim (RecordModel olarak döner)
-  // Kullanıcı verilerine erişmek için: currentUser?.data['fullName'] veya currentUser?.getStringValue('fullName')
   RecordModel? get currentUser => _pb.authStore.model is RecordModel ? _pb.authStore.model as RecordModel : null;
 
+  bool get isAdmin {
+    if (!isAuthenticated) return false;
+    return _pb.authStore.model is RecordModel 
+        ? (_pb.authStore.model as RecordModel).getBoolValue('isAdmin') 
+        : false;
+  }
+
   Future<RecordAuth> login(String email, String password) async {
-    return await _pb.collection('users').authWithPassword(email, password);
+    final auth = await _pb.collection('users').authWithPassword(email, password);
+    notifyListeners(); // Router'ı tetikler
+    return auth;
   }
 
   Future<RecordModel> register({
@@ -38,33 +47,26 @@ class AuthService {
     try {
       return await _pb.collection('users').create(body: body);
     } catch (e) {
-      // PocketBase'den dönen hatayı analiz et
       final errorString = e.toString();
-      // Hata mesajı genellikle JSON formatında validation hatalarını içerir
-      // "email" ve "unique" veya "taken" gibi anahtar kelimeleri kontrol ediyoruz
       if (errorString.contains('email') && 
           (errorString.contains('unique') || errorString.contains('taken') || errorString.contains('validation'))) {
-        throw Exception('EMAIL_ALREADY_EXISTS'); // Özel bir hata kodu fırlatıyoruz
+        throw Exception('EMAIL_ALREADY_EXISTS');
       }
       rethrow;
     }
-  }
-
-  bool get isAdmin {
-    if (!isAuthenticated) return false;
-    return _pb.authStore.model is RecordModel 
-        ? (_pb.authStore.model as RecordModel).getBoolValue('isAdmin') 
-        : false;
   }
 
   Future<RecordModel> updateProfile({required String fullName}) async {
     final body = <String, dynamic>{
       'fullName': fullName,
     };
-    return await _pb.collection('users').update(userId, body: body);
+    final record = await _pb.collection('users').update(userId, body: body);
+    notifyListeners(); // Profil değişirse arayüzü güncelle
+    return record;
   }
 
   void logout() {
     _pb.authStore.clear();
+    notifyListeners(); // Router'ı tetikler (Login'e atar)
   }
 }

@@ -5,16 +5,11 @@ import 'core/pb_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Web'de URL'deki # işaretini kaldırır
   usePathUrlStrategy();
-
-  // PocketBase ve LocalStorage başlatılıyor
   await PbClient.init();
 
   runApp(const AkilliOfisApp());
 }
-
 class AkilliOfisApp extends StatelessWidget {
   const AkilliOfisApp({super.key});
 
@@ -22,7 +17,15 @@ class AkilliOfisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Akıllı Ofis',
-      theme: ThemeData.dark(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        primaryColor: const Color(0xFF7E57C2),
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFF7E57C2),
+          secondary: const Color(0xFFB39DDB),
+          surface: Colors.grey.shade900,
+        ),
+      ),
       routerConfig: AppRouter.router,
     );
   }

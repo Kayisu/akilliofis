@@ -17,6 +17,11 @@ class _AdminReservationsState extends State<AdminReservations> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _runCleanup(); 
+  }
+
+  Future<void> _runCleanup() async {
+    await _repo.processExpiredReservations();
   }
 
   @override
@@ -35,18 +40,15 @@ class _AdminReservationsState extends State<AdminReservations> with SingleTicker
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Sekme 1: Bekleyenler (Onayla, Reddet, Sil)
           _ReservationListBuilder(
             repo: _repo, 
             statusFilter: 'pending', 
             showActions: true,
           ),
-          
-          // Sekme 2: Tümü (Sadece Sil)
           _ReservationListBuilder(
             repo: _repo, 
-            statusFilter: null, 
-            showActions: false, // Onay/Reddet yok, ama Sil her zaman var
+            statusFilter: null, // Null = Filtresiz (Hepsini Getir)
+            showActions: false, 
           ),
         ],
       ),
@@ -57,7 +59,7 @@ class _AdminReservationsState extends State<AdminReservations> with SingleTicker
 class _ReservationListBuilder extends StatefulWidget {
   final ReservationRepo repo;
   final String? statusFilter;
-  final bool showActions; // True ise Onayla/Reddet butonlarını gösterir
+  final bool showActions;
 
   const _ReservationListBuilder({
     required this.repo,
@@ -78,42 +80,40 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
     _refresh();
   }
 
-  void _refresh() {
-    setState(() {
-      _future = widget.repo.getAdminReservations(filterStatus: widget.statusFilter);
-    });
+  Future<void> _refresh() async {
+    if (widget.statusFilter == null) {
+       await widget.repo.processExpiredReservations();
+    }
+    if (mounted) {
+      setState(() {
+        _future = widget.repo.getAdminReservations(filterStatus: widget.statusFilter);
+      });
+    }
   }
 
-  // Durum Güncelleme (Onayla / Reddet)
   Future<void> _updateStatus(String id, String status) async {
     try {
       await widget.repo.updateStatus(id, status);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Durum güncellendi: $status')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Durum: $status')));
         _refresh();
       }
     } catch (e) {
-      _showError(e.toString());
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
     }
   }
 
-  // YENİ: Silme İşlemi (Dialog ile onay alalım)
   Future<void> _deleteItem(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Silmek İstediğine Emin misin?'),
-        content: const Text('Bu işlem geri alınamaz. Kayıt veritabanından tamamen silinecek.'),
+        title: const Text('Kalıcı Olarak Sil'),
+        content: const Text('Bu işlem geri alınamaz.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Vazgeç', style: TextStyle(color: Colors.grey)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Sil'),
           ),
         ],
@@ -121,25 +121,8 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
     );
 
     if (confirm == true) {
-      try {
-        await widget.repo.deleteReservation(id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kayıt silindi.')),
-          );
-          _refresh();
-        }
-      } catch (e) {
-        _showError(e.toString());
-      }
-    }
-  }
-
-  void _showError(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $message'), backgroundColor: Colors.red),
-      );
+      await widget.repo.deleteReservation(id);
+      if (mounted) _refresh();
     }
   }
 
@@ -148,20 +131,14 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
     return FutureBuilder<List<ReservationModel>>(
       future: _future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Hata: ${snapshot.error}'));
-        }
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return Center(child: Text('Hata: ${snapshot.error}'));
 
         final list = snapshot.data ?? [];
-        if (list.isEmpty) {
-          return const Center(child: Text('Kayıt bulunamadı.'));
-        }
+        if (list.isEmpty) return const Center(child: Text('Kayıt bulunamadı.'));
 
         return RefreshIndicator(
-          onRefresh: () async => _refresh(),
+          onRefresh: _refresh,
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: list.length,
@@ -176,31 +153,23 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
                     child: Icon(_getStatusIcon(item.status), color: _getStatusColor(item.status)),
                   ),
                   title: Text(item.userName ?? 'Misafir', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${item.placeName ?? "Bilinmeyen Oda"} \n${_formatDate(item.startTs)}'),
+                  subtitle: Text('${item.placeName ?? "Oda"} \n${_formatDate(item.startTs)} - ${item.status.toUpperCase()}'),
                   isThreeLine: true,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Sadece Bekleyenler sekmesindeyse Onay/Ret göster
-                      if (widget.showActions) ...[
+                      if (widget.showActions && item.status == 'pending') ...[
                         IconButton(
                           icon: const Icon(Icons.check_circle_outline, color: Colors.green),
-                          tooltip: 'Onayla',
                           onPressed: () => _updateStatus(item.id!, 'approved'),
                         ),
                         IconButton(
                           icon: const Icon(Icons.cancel_outlined, color: Colors.orange),
-                          tooltip: 'Reddet',
                           onPressed: () => _updateStatus(item.id!, 'rejected'),
                         ),
                       ],
-                      
-                      // Silme butonu her zaman var (ama biraz ayırmak için Divider veya SizedBox koyabiliriz)
-                      if (widget.showActions) const SizedBox(width: 8), // Boşluk
-                      
                       IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        tooltip: 'Sil',
                         onPressed: () => _deleteItem(item.id!),
                       ),
                     ],
@@ -216,7 +185,7 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
 
   String _formatDate(DateTime dt) {
     final local = dt.toLocal();
-    return '${local.day}.${local.month} ${local.year}  ${local.hour.toString().padLeft(2,'0')}:${local.minute.toString().padLeft(2,'0')}';
+    return '${local.day}.${local.month} ${local.hour}:${local.minute.toString().padLeft(2,'0')}';
   }
 
   Color _getStatusColor(String status) {
@@ -224,6 +193,8 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
       case 'approved': return Colors.green.shade700;
       case 'rejected': return Colors.red.shade700;
       case 'pending': return Colors.orange.shade700;
+      case 'completed': return Colors.blueGrey;
+      case 'cancelled': return Colors.grey; // İptaller gri
       default: return Colors.grey;
     }
   }
@@ -233,6 +204,8 @@ class _ReservationListBuilderState extends State<_ReservationListBuilder> {
       case 'approved': return Icons.check;
       case 'rejected': return Icons.close;
       case 'pending': return Icons.hourglass_top;
+      case 'completed': return Icons.done_all;
+      case 'cancelled': return Icons.block;
       default: return Icons.info;
     }
   }

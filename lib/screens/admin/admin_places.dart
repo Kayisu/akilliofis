@@ -11,21 +11,146 @@ class AdminPlacesScreen extends StatefulWidget {
 }
 
 class _AdminPlacesScreenState extends State<AdminPlacesScreen> {
-  final PlaceRepo _placeRepo = PlaceRepo();
-  late Future<List<PlaceModel>> _placesFuture;
+  final _repo = PlaceRepo();
+  late Future<List<PlaceModel>> _future;
 
   @override
   void initState() {
     super.initState();
-    _placesFuture = _placeRepo.getPlaces();
+    _refreshList();
+  }
+
+  void _refreshList() {
+    setState(() {
+      _future = _repo.getPlaces();
+    });
+  }
+
+  // --- EKLEME & DÜZENLEME PENCERESİ ---
+  Future<void> _showEditor(PlaceModel? place) async {
+    final isEditing = place != null;
+    final nameCtrl = TextEditingController(text: place?.name ?? '');
+    final capCtrl = TextEditingController(text: place?.capacity.toString() ?? '1');
+    bool isActive = place?.isActive ?? true;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(isEditing ? 'Odayı Düzenle' : 'Yeni Oda Ekle'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Oda Adı', hintText: 'Örn: Toplantı Odası 1'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: capCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Kapasite', suffixText: 'Kişi'),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                title: const Text('Aktif mi?'),
+                value: isActive,
+                onChanged: (val) {
+                  setDialogState(() => isActive = val);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                final cap = int.tryParse(capCtrl.text) ?? 1;
+
+                if (name.isEmpty) return;
+
+                try {
+                  final newPlace = PlaceModel(
+                    id: place?.id ?? '',
+                    name: name,
+                    capacity: cap,
+                    isActive: isActive,
+                  );
+
+                  if (isEditing) {
+                    await _repo.updatePlace(newPlace);
+                  } else {
+                    await _repo.createPlace(newPlace);
+                  }
+
+                  if (mounted) {
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _refreshList();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(isEditing ? 'Güncellendi' : 'Oluşturuldu')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+                  }
+                }
+              },
+              child: Text(isEditing ? 'Kaydet' : 'Oluştur'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteItem(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Silmek istiyor musun?'),
+        content: const Text('Oda artık listelerde görünmeyecek.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hayır')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Evet, Sil', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _repo.deletePlace(id);
+        _refreshList();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silindi.')));
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ofis Yönetimi')),
+      appBar: AppBar(
+        title: const Text('Ofis Yönetimi'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showEditor(null),
+        child: const Icon(Icons.add),
+      ),
       body: FutureBuilder<List<PlaceModel>>(
-        future: _placesFuture,
+        future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -34,71 +159,58 @@ class _AdminPlacesScreenState extends State<AdminPlacesScreen> {
             return Center(child: Text('Hata: ${snapshot.error}'));
           }
 
-          final places = snapshot.data ?? [];
-          if (places.isEmpty) {
-            return const Center(child: Text('Kayıtlı ofis bulunamadı.'));
+          final list = snapshot.data ?? [];
+
+          if (list.isEmpty) {
+            return const Center(
+              child: Text('Henüz hiç oda eklenmemiş.\nSağ alttan ekleyebilirsin.', textAlign: TextAlign.center),
+            );
           }
 
-          return GridView.builder(
+          return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: places.length,
-            // Masaüstü/Tablet için grid yapısı
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 400,
-              childAspectRatio: 1.5,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
+            itemCount: list.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final place = places[index];
-              return _buildAdminRoomCard(context, place);
+              final place = list[index];
+              return Card(
+                color: place.isActive ? null : Theme.of(context).cardColor.withAlpha(128),
+                child: ListTile(
+                  // DÜZELTME BURADA: Sadece aktifse Dashboard'a git, değilse null (tıklanamaz)
+                  onTap: place.isActive ? () {
+                    context.push('/admin/dashboard', extra: place);
+                  } : null,
+                  
+                  leading: CircleAvatar(
+                    backgroundColor: place.isActive ? Colors.green.withAlpha(50) : Colors.grey.withAlpha(50),
+                    child: Icon(Icons.meeting_room, color: place.isActive ? Colors.green : Colors.grey),
+                  ),
+                  title: Text(
+                    place.name, 
+                    style: TextStyle(
+                      decoration: place.isActive ? null : TextDecoration.lineThrough,
+                      color: place.isActive ? null : Colors.grey,
+                    )
+                  ),
+                  subtitle: Text('${place.capacity} Kişilik Kapasite'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                        onPressed: () => _showEditor(place),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () => _deleteItem(place.id),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildAdminRoomCard(BuildContext context, PlaceModel place) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          // Admin Dashboard'a odayı parametre olarak gönderiyoruz
-          context.go('/admin/dashboard', extra: place);
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(Icons.meeting_room, size: 32, color: Theme.of(context).colorScheme.primary),
-                  if (place.isActive)
-                    const Chip(label: Text('Aktif'), backgroundColor: Colors.green, labelStyle: TextStyle(fontSize: 10))
-                  else
-                    const Chip(label: Text('Pasif'), backgroundColor: Colors.red, labelStyle: TextStyle(fontSize: 10)),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                place.name,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Kapasite: ${place.capacity} Kişi',
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -42,8 +42,12 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
         ? List.filled(5, 0.0)
         : dailyData.take(5).map((e) => e.predictedComfort).toList();
 
-    while (occupancyData.length < 5) occupancyData.add(0.0);
-    while (comfortData.length < 5) comfortData.add(0.0);
+    while (occupancyData.length < 5) {
+      occupancyData.add(0.0);
+    }
+    while (comfortData.length < 5) {
+      comfortData.add(0.0);
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),

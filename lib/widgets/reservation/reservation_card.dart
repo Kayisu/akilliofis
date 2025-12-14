@@ -4,91 +4,90 @@ import '../../data/reservation_model.dart';
 class ReservationCard extends StatelessWidget {
   final ReservationModel reservation;
 
-  const ReservationCard({super.key, required this.reservation});
+  const ReservationCard({
+    super.key,
+    required this.reservation,
+    // onCancel callback'ini kaldırdık, artık listeden yönetiliyor
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Duruma göre renk ve ikon belirleme
-    Color statusColor;
-    IconData statusIcon;
-    String statusText;
-
-    switch (reservation.status) {
-      case 'approved':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
-        statusText = 'Onaylandı';
-        break;
-      case 'rejected':
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel_outlined;
-        statusText = 'Reddedildi';
-        break;
-      default:
-        statusColor = Colors.orange;
-        statusIcon = Icons.hourglass_empty;
-        statusText = 'Bekliyor';
-    }
-
-    final timeStr = '${_formatTime(reservation.startTs)} - ${_formatTime(reservation.endTs)}';
+    final statusInfo = _getStatusInfo(reservation.status);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      margin: EdgeInsets.zero, // Margin'i ListView hallediyor
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // Tamamlananlar biraz daha sönük dursun
+      color: reservation.status == 'completed' 
+          ? Theme.of(context).cardColor.withAlpha(120) 
+          : Theme.of(context).cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        // Yüksekliği azaltmak için padding'i küçülttük (16 -> 12)
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // Sol Taraf: Tarih Kutusu
+            // Sol Taraf: İkon ve Durum Rengi
             Container(
-              padding: const EdgeInsets.all(12),
+              width: 4,
+              height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    '${reservation.startTs.day}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                  Text(
-                    _getMonthName(reservation.startTs.month),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
+                color: statusInfo.color,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             
-            // Orta Taraf: Detaylar
+            // Orta Taraf: Bilgiler
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    reservation.placeName ?? 'Bilinmeyen Oda',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        reservation.placeName ?? 'Oda',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          decoration: reservation.status == 'cancelled' ? TextDecoration.lineThrough : null,
+                          color: reservation.status == 'cancelled' ? Colors.grey : null,
+                        ),
+                      ),
+                      // Durum Badge'i (Küçük ve şık)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: statusInfo.color.withAlpha(25),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: statusInfo.color.withAlpha(50)),
+                        ),
+                        child: Text(
+                          statusInfo.label,
+                          style: TextStyle(
+                            color: statusInfo.color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    timeStr,
-                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                  // Tarih ve Saat tek satırda
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 12, color: Colors.grey.shade400),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_formatDate(reservation.startTs)}  •  ${_formatTime(reservation.startTs)} - ${_formatTime(reservation.endTs)}',
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
-
-            // Sağ Taraf: Durum
-            Column(
-              children: [
-                Icon(statusIcon, color: statusColor),
-                const SizedBox(height: 4),
-                Text(
-                  statusText,
-                  style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ],
             ),
           ],
         ),
@@ -96,14 +95,23 @@ class ReservationCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
-    // Lokal saate çevirmeyi unutmayalım, veritabanında UTC olabilir
-    final local = dt.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  }
+  String _formatDate(DateTime dt) => '${dt.day}.${dt.month}.${dt.year}';
+  String _formatTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
-  String _getMonthName(int month) {
-    const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-    return months[month - 1];
+  _StatusInfo _getStatusInfo(String status) {
+    switch (status) {
+      case 'approved': return _StatusInfo('Onaylandı', Colors.greenAccent);
+      case 'pending': return _StatusInfo('Bekliyor', Colors.orangeAccent);
+      case 'rejected': return _StatusInfo('Reddedildi', Colors.redAccent);
+      case 'cancelled': return _StatusInfo('İptal', Colors.grey);
+      case 'completed': return _StatusInfo('Tamamlandı', Colors.blueGrey);
+      default: return _StatusInfo('?', Colors.grey);
+    }
   }
+}
+
+class _StatusInfo {
+  final String label;
+  final Color color;
+  _StatusInfo(this.label, this.color);
 }
