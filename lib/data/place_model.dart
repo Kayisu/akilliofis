@@ -4,7 +4,7 @@ class PlaceModel {
   final String id;
   final String name;
   final int capacity;
-  final bool isActive; // Yeni eklenen alan
+  final bool isActive; // Aktiflik durumu
 
   PlaceModel({
     required this.id,
@@ -17,7 +17,7 @@ class PlaceModel {
     return {
       'name': name,
       'capacity': capacity,
-      'is_active': isActive, // DB'ye gönderirken snake_case
+      'is_active': isActive, // Veritabanı formatına dönüştür
     };
   }
 
@@ -26,7 +26,7 @@ class PlaceModel {
       id: record.id,
       name: record.data['name'] ?? '',
       capacity: record.data['capacity'] ?? 0,
-      isActive: record.data['is_active'] ?? true, // DB'den okurken
+      isActive: record.data['is_active'] ?? true, // Veritabanından okurken
     );
   }
 }

@@ -5,14 +5,14 @@ import 'forecast_model.dart';
 class ForecastRepo {
   final PocketBase _pb = PbClient.I.client;
 
-  // Metot ismi senin çağırdığın 'getWeeklyForecasts' olarak güncellendi
+  // Haftalık tahminleri getiren metot
   Future<List<ForecastModel>> getWeeklyForecasts(String placeId) async {
     final now = DateTime.now().toUtc().toIso8601String();
     
-    // Geleceğe dönük tahminleri çekiyoruz
+    // Gelecek tarihli tahmin verilerini getir
     final records = await _pb.collection('forecasts').getFullList(
       filter: 'place_id = "$placeId" && target_ts >= "$now"',
-      sort: 'target_ts', // Tarihe göre sırala (En yakın en üstte)
+      sort: 'target_ts', // Tarihe göre sırala (Yakından uzağa)
     );
 
     return records.map((e) => ForecastModel.fromRecord(e)).toList();

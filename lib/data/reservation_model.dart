@@ -8,9 +8,9 @@ class ReservationModel {
   final DateTime endTs;
   final String status;
   final bool isHidden;
-  final int attendeeCount; // YENİ ALAN
+  final int attendeeCount; // Katılımcı sayısı
 
-  // Join ile gelen veriler
+  // İlişkili kayıtlardan gelen detaylar
   final String? placeName;
   final String? userName;
 
@@ -22,7 +22,7 @@ class ReservationModel {
     required this.endTs,
     this.status = 'pending',
     this.isHidden = false,
-    this.attendeeCount = 1, // Varsayılan 1 kişi
+    this.attendeeCount = 1, // Varsayılan olarak 1 kişi
     this.placeName,
     this.userName,
   });
@@ -35,7 +35,7 @@ class ReservationModel {
       'end_ts': endTs.toUtc().toIso8601String(),
       'status': status,
       'is_hidden': isHidden,
-      'attendee_count': attendeeCount, // YENİ
+      'attendee_count': attendeeCount,
     };
   }
 
@@ -58,11 +58,13 @@ class ReservationModel {
       id: record.id,
       placeId: record.data['place_id'] ?? '',
       userId: record.data['user_id'] ?? '',
-      startTs: DateTime.parse(record.data['start_ts']),
-      endTs: DateTime.parse(record.data['end_ts']),
+      // Saatleri sunucudan alır almaz yerel saate çeviriyoruz
+      startTs: DateTime.parse(record.data['start_ts']).toLocal(),
+      endTs: DateTime.parse(record.data['end_ts']).toLocal(),
+      
       status: record.data['status'] ?? 'pending',
       isHidden: record.data['is_hidden'] ?? false,
-      attendeeCount: record.data['attendee_count'] ?? 1, // YENİ
+      attendeeCount: record.data['attendee_count'] ?? 1,
       placeName: pName,
       userName: uName,
     );

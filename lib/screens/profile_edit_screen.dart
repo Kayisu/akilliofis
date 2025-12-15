@@ -40,7 +40,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profil güncellendi')),
         );
-        context.pop(); // Geri dön
+        context.pop(); // Önceki ekrana dön
       }
     } catch (e) {
       if (mounted) {

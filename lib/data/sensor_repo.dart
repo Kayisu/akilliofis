@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // debugPrint için gerekli
+import 'package:flutter/foundation.dart'; // Hata ayıklama çıktısı için
 import 'package:pocketbase/pocketbase.dart';
 import '../core/pb_client.dart';
 import 'sensor_model.dart';
@@ -7,11 +7,11 @@ import 'sensor_model.dart';
 class SensorRepository {
   final PocketBase _pb = PbClient.I.client;
 
-  /// Belirtilen odaya (placeId) ait EN SON sensör verisini çeker.
+  /// Belirtilen odaya ait en son sensör verisini getir
   Future<SensorData> getLatestSensorData(String placeId) async {
     try {
-      // 'sensor_readings' koleksiyonundan, place_id'si eşleşen
-      // 'created' tarihine göre en yeni (descending) 1 kaydı getir.
+      // Sensör okumaları koleksiyonundan odaya göre filtrele
+      // Oluşturulma tarihine göre en yeni kaydı al
       final records = await _pb.collection('sensor_readings').getList(
         page: 1,
         perPage: 1,
@@ -22,11 +22,11 @@ class SensorRepository {
       if (records.items.isNotEmpty) {
         return SensorData.fromRecord(records.items.first);
       } else {
-        // Kayıt yoksa boş model dön
+        // Kayıt bulunamazsa boş model döndür
         return SensorData.empty();
       }
     } catch (e) {
-      // Hata durumunda (loglayabilirsin) boş dönelim ki uygulama çökmesin
+      // Hata durumunda uygulamanın çökmemesi için boş değer dön
       debugPrint('Sensör verisi çekilemedi: $e');
       return SensorData.empty();
     }
@@ -35,18 +35,18 @@ class SensorRepository {
   Stream<SensorData> subscribeToPlace(String placeId) {
     final controller = StreamController<SensorData>();
 
-    // Başlangıç verisi
+    // İlk veriyi yükle
     getLatestSensorData(placeId).then((data) {
       if (!controller.isClosed) controller.add(data);
     });
 
-    // SUBSCRIBE DEĞİŞİKLİĞİ: filter parametresi kaldırıldı, mantık içeri alındı.
+    // Abonelik değişikliği: Filtreleme istemci tarafında yapılıyor
     _pb.collection('sensor_readings').subscribe('*', (e) {
-      // 1. Sadece 'create' aksiyonu mu?
+      // 1. Sadece yeni kayıt oluşturma işlemleri
       if (e.action == 'create' && e.record != null) {
         
-        // 2. İSTEMCİ TARAFI FİLTRELEME:
-        // Gelen veri bizim izlediğimiz odaya mı ait?
+        // 2. İstemci tarafı filtreleme:
+        // Veri izlenen odaya mı ait?
         if (e.record!.data['place_id'] == placeId) {
           if (!controller.isClosed) {
             controller.add(SensorData.fromRecord(e.record!));
@@ -74,11 +74,11 @@ class SensorRepository {
       return records.items
           .map((e) => SensorData.fromRecord(e))
           .toList()
-          .reversed // Eskiden yeniye sırala
+          .reversed // Eskiden yeniye doğru sırala
           .toList();
           
     } catch (e) {
-      debugPrint('Geçmiş veri hatası: $e');
+      debugPrint('Geçmiş veri alınırken hata oluştu: $e');
       return [];
     }
   }

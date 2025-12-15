@@ -17,7 +17,7 @@ class ReservationForm extends StatefulWidget {
 class _ReservationFormState extends State<ReservationForm> {
   final _repo = ReservationRepo();
   
-  // YENİ: Kişi sayısı girişi için controller
+  // Kişi sayısı girişi kontrolcüsü
   final TextEditingController _countController = TextEditingController(text: '1');
   
   late DateTime _selectedDate;
@@ -29,7 +29,7 @@ class _ReservationFormState extends State<ReservationForm> {
   @override
   void initState() {
     super.initState();
-    // Varsayılan olarak yarına tarih atıyoruz
+    // Varsayılan tarih: Yarın
     _selectedDate = DateTime.now().add(const Duration(days: 1));
   }
 
@@ -66,7 +66,7 @@ class _ReservationFormState extends State<ReservationForm> {
   }
 
   Future<void> _handleSave() async {
-    // 1. Validasyonlar
+    // 1. Doğrulamalar
     final startVal = _startTime.hour * 60 + _startTime.minute;
     final endVal = _endTime.hour * 60 + _endTime.minute;
 
@@ -77,7 +77,7 @@ class _ReservationFormState extends State<ReservationForm> {
       return;
     }
 
-    // Kişi Sayısı Validasyonu
+    // Kişi sayısı doğrulaması
     final count = int.tryParse(_countController.text);
     if (count == null || count < 1) {
        ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +86,7 @@ class _ReservationFormState extends State<ReservationForm> {
       return;
     }
 
-    // Kapasite Kontrolü
+    // Kapasite kontrolü
     if (count > widget.place.capacity) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

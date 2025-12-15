@@ -1,5 +1,5 @@
 class AppConfig {
-  // Şimdilik sabit. İleride .env / flavor vs. yaparız
+  // Şimdilik sabit değer, ileride ortam değişkenlerine taşınabilir
   static const String pocketBaseUrl =
-      'http://100.96.191.83:8090'; // Pi'nin IP'si
+      'http://100.96.191.83:8090'; // Raspberry Pi IP adresi
 }

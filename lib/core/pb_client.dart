@@ -13,24 +13,24 @@ class PbClient {
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // 1. Zaman aşımı kontrolü (1 Gün)
+    // 1. Oturum zaman aşımı kontrolü (24 saat)
     final lastLoginStr = prefs.getString('last_login_timestamp');
     if (lastLoginStr != null) {
       final lastLogin = DateTime.parse(lastLoginStr);
       final difference = DateTime.now().difference(lastLogin);
       
       if (difference.inHours >= 24) {
-        // Süre dolmuş, temizle
+        // Süre dolduysa oturum verilerini temizle
         await prefs.remove('pb_auth');
         await prefs.remove('last_login_timestamp');
       }
     }
 
-    // 2. AuthStore yapılandırması
+    // 2. Kimlik doğrulama deposu yapılandırması
     final store = AsyncAuthStore(
       save: (String data) async {
         await prefs.setString('pb_auth', data);
-        // Her token kaydında (giriş/refresh) zaman damgasını güncelle
+        // Her giriş veya yenileme işleminde zaman damgasını güncelle
         await prefs.setString('last_login_timestamp', DateTime.now().toIso8601String());
       },
       initial: prefs.getString('pb_auth'),

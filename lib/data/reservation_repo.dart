@@ -12,8 +12,8 @@ class ReservationRepo {
   }
 
   Future<List<ReservationModel>> getMyReservations(String userId) async {
-    // İptal edilenleri gösterme (status != cancelled)
-    // Kullanıcının gizlediklerini gösterme (is_hidden = false)
+    // İptal edilen rezervasyonları hariç tut
+    // Kullanıcı tarafından gizlenenleri gösterme
     final records = await _pb.collection('reservations').getFullList(
       filter: 'user_id = "$userId" && status != "cancelled" && is_hidden = false',
       sort: '-start_ts',
@@ -26,7 +26,7 @@ class ReservationRepo {
     String filter = ''; 
     
     if (filterStatus != null) {
-      // Eğer özel bir durum isteniyorsa (örn: sadece pending) onu filtrele
+      // Belirli bir duruma göre filtreleme yap
       filter = 'status = "$filterStatus"';
     }
 
@@ -44,7 +44,7 @@ class ReservationRepo {
     await _pb.collection('reservations').update(id, body: body);
   }
 
-  // Kullanıcı "İptal Et" dediğinde bu çalışacak (Soft Delete)
+  // Kullanıcı iptali (Görünürlüğü gizle)
   Future<void> hideReservation(String id) async {
     final body = { 'is_hidden': true };
     await _pb.collection('reservations').update(id, body: body);
@@ -55,7 +55,7 @@ class ReservationRepo {
     await _pb.collection('reservations').update(id, body: body);
   }
   
-  // deleteReservation'a artık kullanıcının ihtiyacı yok, ama admin için durabilir.
+  // Rezervasyonu tamamen sil (Yönetici işlemi)
   Future<void> deleteReservation(String id) async {
     await _pb.collection('reservations').delete(id);
   }
@@ -78,7 +78,7 @@ class ReservationRepo {
   Future<void> processExpiredReservations() async {
     final nowStr = DateTime.now().toUtc().toIso8601String();
     
-    // Süresi dolmuş ama hala "pending" veya "approved" olanları bul
+    // Süresi dolmuş ve işlem bekleyen rezervasyonları bul
     final filter = 'end_ts < "$nowStr" && (status = "pending" || status = "approved")';
 
     try {
@@ -87,9 +87,9 @@ class ReservationRepo {
       for (var record in records) {
         String newStatus;
         
-        // MANTIK: 
-        // Eğer süresi dolana kadar 'pending' (beklemede) kaldıysa -> REJECTED (Zaman aşımı)
-        // Eğer 'approved' (onaylı) ise -> COMPLETED (Başarıyla tamamlandı)
+        // İşlem mantığı:
+        // Beklemede kalanlar -> Reddedildi (Zaman aşımı)
+        // Onaylı olanlar -> Tamamlandı
         if (record.data['status'] == 'pending') {
           newStatus = 'rejected';
         } else {

@@ -4,7 +4,7 @@ class ForecastModel {
   final String id;
   final String placeId;
   final DateTime targetTs;
-  // İsimlendirmeler senin grafik koduna uyduruldu
+  // Grafik kodlarıyla uyumlu isimlendirmeler
   final double predictedOccupancy; 
   final double predictedComfort; 
 
@@ -20,9 +20,9 @@ class ForecastModel {
     return ForecastModel(
       id: record.id,
       placeId: record.getStringValue('place_id'),
-      // PocketBase'den gelen String tarihi DateTime'a çeviriyoruz
+      // Sunucudan gelen tarih verisini dönüştür
       targetTs: DateTime.parse(record.getStringValue('target_ts')),
-      // PocketBase sütun isimleri ile eşleştiriyoruz
+      // Veritabanı sütun isimleriyle eşleştirme
       predictedOccupancy: record.getDoubleValue('predicted_occupancy'),
       predictedComfort: record.getDoubleValue('predicted_comfort_score'),
     );

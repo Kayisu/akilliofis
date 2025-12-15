@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../auth/auth_service.dart';
 
-/// NOT: Bu widget daha önce RoomDetailHeader idi.
-/// Ana sayfaya taşındığı için adı HomeHeader olarak güncellendi.
-/// Kullanıcı karşılama ve profil resmi burada gösteriliyor.
+/// Not: Eski RoomDetailHeader widget'ı
+/// Ana sayfaya taşındı ve HomeHeader olarak yeniden adlandırıldı
+/// Kullanıcı karşılama ve profil resmi gösterimi
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 

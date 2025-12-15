@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
               await context.push('/profile-edit');
-              // Profil ekranından dönüldüğünde ekranı yenile
+              // Profil düzenlemeden dönünce ekranı yenile
               setState(() {});
             },
           ),

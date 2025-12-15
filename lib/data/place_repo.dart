@@ -6,14 +6,14 @@ class PlaceRepo {
   final PocketBase _pb = PbClient.I.client;
 
   Future<List<PlaceModel>> getPlaces() async {
-    // Admin hem aktif hem pasif odaları görsün diye filtre vermiyoruz
+    // Yönetici tüm odaları (aktif/pasif) görebilir
     final records = await _pb.collection('places').getFullList(
       sort: 'name',
     );
     return records.map((e) => PlaceModel.fromRecord(e)).toList();
   }
 
-  // Kullanıcılar sadece aktif odaları görsün (Opsiyonel helper)
+  // Kullanıcılar için sadece aktif odaları listele
   Future<List<PlaceModel>> getActivePlaces() async {
     final records = await _pb.collection('places').getFullList(
       filter: 'is_active = true',

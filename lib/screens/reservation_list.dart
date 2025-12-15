@@ -14,16 +14,16 @@ class ReservationList extends StatefulWidget {
 
 class _ReservationListState extends State<ReservationList> {
   final _repo = ReservationRepo();
-  // Late hatasını önlemek için nullable yapmıyoruz ama initState'de hemen atıyoruz.
+  // Late hatasını önlemek için initState içinde başlatıyoruz
   late Future<List<ReservationModel>> _future;
 
   @override
   void initState() {
     super.initState();
-    // 1. HATA DÜZELTME: Build metodu çalışmadan önce future mutlaka dolu olmalı
+    // 1. Hata düzeltme: Build öncesi future başlatılmalı
     _future = _repo.getMyReservations(AuthService.instance.userId);
     
-    // 2. Temizliği arka planda yap, bitince listeyi sessizce güncelle
+    // 2. Arka planda temizlik yap ve listeyi güncelle
     _runCleanup();
   }
 
@@ -45,11 +45,11 @@ class _ReservationListState extends State<ReservationList> {
   Future<bool> _handleSwipe(ReservationModel item) async {
     final isCompleted = item.status == 'completed';
     
-    // Metinler
+    // Diyalog metinleri
     final actionText = isCompleted ? "listeden kaldırmak" : "iptal etmek";
     final dialogTitle = isCompleted ? "Kaydı Gizle" : "Rezervasyonu İptal Et";
 
-    // Onay İste
+    // Kullanıcı onayı
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -75,12 +75,12 @@ class _ReservationListState extends State<ReservationList> {
 
     try {
       if (isCompleted) {
-        // SENARYO 1: TAMAMLANMIŞ -> SİLME YOK, GİZLEME VAR
-        // Status 'completed' kalır, is_hidden = true olur.
+        // Senaryo 1: Tamamlanmış -> Gizle
+        // Durum 'completed' kalır, görünürlük gizlenir
         await _repo.hideReservation(item.id!);
       } else {
-        // SENARYO 2: AKTİF (Pending/Rejected) -> İPTAL ET
-        // Status 'cancelled' olur. Repo zaten cancelled olanları getirmediği için listeden düşer.
+        // Senaryo 2: Aktif -> İptal et
+        // Durum 'cancelled' olur ve listeden düşer
         await _repo.cancelReservation(item.id!);
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
@@ -89,8 +89,8 @@ class _ReservationListState extends State<ReservationList> {
         }
       }
       
-      // Listeyi yenile ki değişiklik (gizleme/iptal) yansısın
-      // False dönüyoruz, refresh ile liste zaten güncellenecek
+      // Değişiklikleri yansıtmak için listeyi yenile
+      // False döndür, liste zaten yenilenecek
       _refreshList();
       return false; 
 

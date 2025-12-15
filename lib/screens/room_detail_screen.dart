@@ -18,13 +18,13 @@ class RoomDetailScreen extends StatefulWidget {
 }
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
-  // Repolar
+  // Veri depoları
   final SensorRepository _sensorRepo = SensorRepository();
   final ForecastRepo _forecastRepo = ForecastRepo();
   
   Timer? _timer;
 
-  // Veriler (Varsayılan boş değerler)
+  // Veriler (Varsayılan boş)
   SensorData _currentSensorData = SensorData.empty();
   List<ForecastModel> _currentForecasts = [];
   bool _isLoading = true;
@@ -42,12 +42,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   void _startLiveUpdate() {
-    // İlk açılışta her şeyi çek
+    // Başlangıçta tüm verileri getir
     _refreshData();
     
-    // Sonra sadece sensör verisini 5 saniyede bir güncelle
+    // Sensör verisini 5 saniyede bir güncelle
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      // Repository metodunun doğru ismi: getLatestSensorData
+      // En güncel sensör verisini al
       final sensor = await _sensorRepo.getLatestSensorData(widget.place.id);
       if (mounted) {
         setState(() {
@@ -59,7 +59,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   Future<void> _refreshData() async {
     try {
-      // Repository metodlarının doğru isimleri burada önemli
+      // Veri kaynaklarından güncel bilgileri al
       final results = await Future.wait([
         _sensorRepo.getLatestSensorData(widget.place.id),
         _forecastRepo.getWeeklyForecasts(widget.place.id), 
@@ -95,7 +95,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       height: constraints.maxHeight, 
                       child: Column(
                         children: [
-                          // Pager'a verileri parametre olarak geçiyoruz
+                          // Verileri sayfalayıcıya aktar
                           Expanded(
                             child: RoomDetailPager(
                               roomId: widget.place.id,

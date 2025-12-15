@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // Widget ve Colors için şart
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
@@ -8,6 +8,7 @@ import '../screens/room_detail_screen.dart';
 import '../screens/profile_edit_screen.dart';
 import '../screens/reservation_create.dart';
 import '../data/place_model.dart';
+import '../screens/room_list_screen.dart'; // Oda listesi ekranı için gerekli import
 import '../screens/admin/admin_places.dart'; 
 import '../screens/admin/admin_shell.dart';
 import '../screens/admin/admin_dashboard.dart';
@@ -15,8 +16,8 @@ import '../screens/admin/admin_reservations.dart';
 
 class AppRouter {
   static final router = GoRouter(
-    initialLocation: '/login', // Başlangıç her zaman login olsun, redirect çözer
-    refreshListenable: AuthService.instance, // Artık hata vermez
+    initialLocation: '/login',
+    refreshListenable: AuthService.instance,
     
     routes: [
       GoRoute(
@@ -28,17 +29,23 @@ class AppRouter {
         builder: (context, state) => const RegisterScreen(),
       ),
       
-      // --- NORMAL KULLANICI (HomeShell kendi içinde tab yönetiyor) ---
+      // --- Normal kullanıcı rotaları ---
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeShell(),
       ),
       
-      // --- DETAY SAYFALARI ---
+      // --- Oda seçim ekranı rotası ---
+      // Bu rota sayesinde '/rooms' yönlendirmesi çalışır
+      GoRoute(
+        path: '/rooms',
+        builder: (context, state) => const RoomListScreen(),
+      ),
+      
+      // --- Detay sayfaları ---
       GoRoute(
         path: '/room-detail',
         builder: (context, state) {
-          // Tip güvenliği için kontrol
           if (state.extra is PlaceModel) {
             return RoomDetailScreen(place: state.extra as PlaceModel);
           }
@@ -57,7 +64,7 @@ class AppRouter {
         builder: (context, state) => const ProfileEditScreen(),
       ),
 
-      // --- ADMIN ROTASI (ShellRoute kullanıyoruz çünkü AdminShell child alıyor) ---
+      // --- Yönetici paneli rotaları ---
       ShellRoute(
         builder: (context, state, child) {
           return AdminShell(child: child);
@@ -91,20 +98,17 @@ class AppRouter {
       final isRegistering = location == '/register';
       final isGoingToAdmin = location.startsWith('/admin');
 
-      // 1. Giriş yapmamışsa ve Login/Register değilse -> Login
       if (!isLoggedIn && !isLoggingIn && !isRegistering) return '/login';
 
-      // 2. Giriş yapmış ama hala Login/Register sayfalarındaysa
       if (isLoggedIn && (isLoggingIn || isRegistering)) {
         return isAdmin ? '/admin/places' : '/home';
       }
 
-      // 3. Normal kullanıcı Admin'e girmeye çalışırsa -> Home
       if (isLoggedIn && !isAdmin && isGoingToAdmin) {
         return '/home';
       }
 
-      return null; // Değişiklik yok
+      return null;
     },
   );
 }

@@ -8,7 +8,7 @@ class SensorData {
   final int co2;
   final int gas; // VOC Index
   final double comfortScore;
-  final bool isOccupied; // YENİ: Hareket var mı?
+  final bool isOccupied; // Hareket algılandı mı?
   final DateTime? recordedAt;
 
   SensorData({
@@ -17,7 +17,7 @@ class SensorData {
     required this.co2,
     required this.gas,
     required this.comfortScore,
-    this.isOccupied = false, // Varsayılan
+    this.isOccupied = false, // Varsayılan değer
     this.recordedAt,
   });
 
@@ -28,7 +28,7 @@ class SensorData {
       co2: record.getIntValue('co2_ppm'),
       gas: record.getIntValue('voc_index'),
       comfortScore: record.getDoubleValue('comfort_score'),
-      isOccupied: record.getBoolValue('pir_occupied'), // Şemadan çekiyoruz
+      isOccupied: record.getBoolValue('pir_occupied'), // Veritabanı şemasından al
       recordedAt: DateTime.parse(record.getStringValue('recorded_at')),
     );
   }

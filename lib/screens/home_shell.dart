@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'room_list_screen.dart';
 import 'settings_screen.dart';
-import 'reservation_list.dart'; // YENİ IMPORT (klasörsüz)
+import 'reservation_list.dart'; // Rezervasyon listesi importu
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});

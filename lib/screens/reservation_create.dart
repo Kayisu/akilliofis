@@ -24,7 +24,7 @@ class ReservationCreate extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          // Form mantığı widget içinde
+          // Form işlemleri widget içerisinde yönetiliyor
           child: ReservationForm(place: place!),
         ),
       ),
