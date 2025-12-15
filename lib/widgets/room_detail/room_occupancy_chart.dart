@@ -4,6 +4,7 @@ import '../../data/forecast_model.dart';
 class RoomOccupancyChart extends StatefulWidget {
   final String roomId;
   final List<ForecastModel> forecasts;
+  // Backend artık doğrudan oran (0.0 - 1.0) gönderdiği için capacity parametresine gerek kalmadı.
 
   const RoomOccupancyChart({
     super.key,
@@ -20,7 +21,10 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   int? _focusedIndex;
 
   final List<String> _days = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'];
+  
+  // Grafikte gösterilecek hedef saatler
   final List<String> _timeLabels = ['09:00', '11:00', '13:00', '15:00', '17:00'];
+  final List<int> _targetHours = [9, 11, 13, 15, 17]; // Eşleştirme için integer saatler
 
   List<ForecastModel> _getForecastsForDay(int dayIndex) {
     if (widget.forecasts.isEmpty) return [];
@@ -34,20 +38,33 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   Widget build(BuildContext context) {
     final dailyData = _getForecastsForDay(_selectedDayIndex);
 
-    final occupancyData = dailyData.isEmpty
-        ? List.filled(5, 0.0)
-        : dailyData.take(5).map((e) => e.predictedOccupancy).toList();
+    // 1. DOLULUK VERİSİ HAZIRLAMA (GÜNCELLENDİ)
+    // take(5) yerine hedef saatleri arayıp buluyoruz.
+    final occupancyData = _targetHours.map((hour) {
+      try {
+        // O saatteki (örn: 09:00) veriyi bul
+        final match = dailyData.firstWhere((f) => f.targetTs.hour == hour);
+        
+        // Backend'den 0.0 - 1.0 arası oran geliyor, direkt kullanıyoruz.
+        // Garanti olsun diye clamp ekledik.
+        return match.predictedOccupancy.clamp(0.0, 1.0);
+      } catch (e) {
+        // Veri yoksa (örn: geçmiş saat) 0 bas
+        return 0.0;
+      }
+    }).toList();
 
-    final comfortData = dailyData.isEmpty
-        ? List.filled(5, 0.0)
-        : dailyData.take(5).map((e) => e.predictedComfort).toList();
+    // 2. KONFOR VERİSİ HAZIRLAMA (GÜNCELLENDİ)
+    final comfortData = _targetHours.map((hour) {
+      try {
+        final match = dailyData.firstWhere((f) => f.targetTs.hour == hour);
+        return match.predictedComfort.clamp(0.0, 1.0);
+      } catch (e) {
+        return 0.0;
+      }
+    }).toList();
 
-    while (occupancyData.length < 5) {
-      occupancyData.add(0.0);
-    }
-    while (comfortData.length < 5) {
-      comfortData.add(0.0);
-    }
+    // while döngülerine gerek kalmadı, map zaten 5 eleman üretir.
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
@@ -174,10 +191,10 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
           const SizedBox(height: 30),
 
-          // 4. GÜN SEÇİCİ (GÜNCELLENEN KISIM)
+          // 4. GÜN SEÇİCİ
           Container(
             height: 50,
-            padding: const EdgeInsets.all(4), // Padding azaltıldı
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08), 
               borderRadius: BorderRadius.circular(25), 
@@ -186,7 +203,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(_days.length, (index) {
                 final isSelected = _selectedDayIndex == index;
-                // Expanded ile her güne eşit alan ayırıyoruz
                 return Expanded( 
                   child: GestureDetector(
                     onTap: () => setState(() { 
@@ -196,9 +212,8 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       alignment: Alignment.center,
-                      // Yanlardan (horizontal) padding yerine sadece dikey padding
                       padding: const EdgeInsets.symmetric(vertical: 8), 
-                      margin: const EdgeInsets.symmetric(horizontal: 1), // Elemanlar birbirine yapışmasın
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFFE1BEE7) : Colors.transparent, 
                         borderRadius: BorderRadius.circular(20),
@@ -206,7 +221,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                       child: Text(
                         _days[index],
                         style: TextStyle(
-                          fontSize: 11, // Biraz küçültüldü
+                          fontSize: 11,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           color: isSelected ? Colors.black : Colors.white.withValues(alpha: 0.6),
                         ),
@@ -238,6 +253,7 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
       );
     }
 
+    // Yüzdeleri hesapla
     final occ = (occupancyData[_focusedIndex!] * 100).toInt();
     final comf = (comfortData[_focusedIndex!] * 100).toInt();
     final time = _timeLabels[_focusedIndex!];
