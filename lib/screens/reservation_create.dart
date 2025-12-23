@@ -1,3 +1,4 @@
+//reservation_create.dart
 import 'package:flutter/material.dart';
 import '../data/place_model.dart';
 import '../widgets/reservation/reservation_form.dart';
@@ -24,7 +25,6 @@ class ReservationCreate extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          // Form işlemleri widget içerisinde yönetiliyor
           child: ReservationForm(place: place!),
         ),
       ),

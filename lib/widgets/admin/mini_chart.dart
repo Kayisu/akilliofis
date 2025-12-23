@@ -1,3 +1,4 @@
+//mini_chart.dart
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../data/sensor_model.dart';
@@ -26,25 +27,23 @@ class MiniChart extends StatelessWidget {
     }).toList();
 
     return Container(
-      // GÜNCEL: Dikey boşlukları kıstık, kart daha zarif dursun diye
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C), // Koyu Lacivert Arka Plan
+        color: const Color(0xFF1E1E2C), 
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withAlpha(25)), // Hafif saydam kenarlık
+        border: Border.all(color: Colors.white.withAlpha(25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Başlık ve Değer Satırı
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 title, 
                 style: TextStyle(
-                  fontSize: 11, // GÜNCEL: Font küçüldü
+                  fontSize: 11, 
                   color: Colors.grey.shade400, 
                   fontWeight: FontWeight.bold
                 )
@@ -52,7 +51,7 @@ class MiniChart extends StatelessWidget {
               Text(
                 currentValue, 
                 style: TextStyle(
-                  fontSize: 14, // GÜNCEL: Değer fontu dengelendi
+                  fontSize: 14, 
                   fontWeight: FontWeight.bold, 
                   color: color
                 )
@@ -60,10 +59,8 @@ class MiniChart extends StatelessWidget {
             ],
           ),
           
-          // GÜNCEL: Grafik ile yazı arasındaki boşluk azaltıldı (12 -> 4)
           const SizedBox(height: 4),
           
-          // Grafik Alanı
           Expanded(
             child: LineChart(
               LineChartData(
@@ -71,7 +68,7 @@ class MiniChart extends StatelessWidget {
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
-                lineTouchData: const LineTouchData(enabled: false), // Etkileşim kapalı
+                lineTouchData: const LineTouchData(enabled: false), 
                 lineBarsData: [
                   LineChartBarData(
                     

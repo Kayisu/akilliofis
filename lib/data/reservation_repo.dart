@@ -1,3 +1,4 @@
+//reservation_repo.dart
 import 'package:pocketbase/pocketbase.dart';
 import '../core/pb_client.dart';
 import 'reservation_model.dart';
@@ -99,7 +100,7 @@ class ReservationRepo {
         await _pb.collection('reservations').update(record.id, body: {'status': newStatus});
       }
     } catch (e) {
-      print("Expire check error: $e");
+      //print("Expire check error: $e");
     }
   }
 }

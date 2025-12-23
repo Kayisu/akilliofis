@@ -1,4 +1,4 @@
-// lib/widgets/room_list/room_card.dart
+//room_card.dart
 import 'package:flutter/material.dart';
 import '../../data/place_model.dart';
 

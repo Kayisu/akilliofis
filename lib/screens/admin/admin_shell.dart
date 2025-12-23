@@ -1,3 +1,4 @@
+//admin_shell.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/auth_service.dart';
@@ -17,7 +18,6 @@ class AdminShell extends StatelessWidget {
     if (location.startsWith('/admin/reservations')) {
       return 1; // Rezervasyonlar
     }
-    // Gelecekte eklenecekler için...
     return 0;
   }
 
@@ -31,7 +31,6 @@ class AdminShell extends StatelessWidget {
         children: [
           NavigationRail(
             selectedIndex: selectedIndex,
-            // Genişlik 800px üstü ise menüyü genişlet
             extended: MediaQuery.of(context).size.width >= 800,
             minExtendedWidth: 200,
             onDestinationSelected: (int index) {
@@ -60,7 +59,6 @@ class AdminShell extends StatelessWidget {
                 selectedIcon: Icon(Icons.calendar_month),
                 label: Text('Rezervasyonlar'),
               ),
-              // Çıkış butonu en son sırada (Index 2)
               NavigationRailDestination(
                 icon: Icon(Icons.logout, color: Colors.redAccent),
                 label: Text('Çıkış', style: TextStyle(color: Colors.redAccent)),

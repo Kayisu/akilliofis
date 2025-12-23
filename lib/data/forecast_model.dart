@@ -1,3 +1,4 @@
+//forecast_model.dart
 import 'package:pocketbase/pocketbase.dart';
 
 class ForecastModel {

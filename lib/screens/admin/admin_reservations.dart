@@ -1,3 +1,4 @@
+//admin_reservations.dart
 import 'package:flutter/material.dart';
 import '../../data/reservation_model.dart';
 import '../../data/reservation_repo.dart';
@@ -47,7 +48,7 @@ class _AdminReservationsState extends State<AdminReservations> with SingleTicker
           ),
           _ReservationListBuilder(
             repo: _repo, 
-            statusFilter: null, // Null = Filtresiz (Hepsini Getir)
+            statusFilter: null, 
             showActions: false, 
           ),
         ],

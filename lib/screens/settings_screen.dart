@@ -1,4 +1,4 @@
-// lib/screens/settings_screen.dart
+//settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/auth_service.dart';

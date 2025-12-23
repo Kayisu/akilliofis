@@ -1,3 +1,4 @@
+// reservation_form.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/place_model.dart';
@@ -109,7 +110,7 @@ class _ReservationFormState extends State<ReservationForm> {
         _endTime.hour, _endTime.minute,
       );
 
-      // 2. ÇAKIŞMA KONTROLÜ
+      // 2. Çakışma Kontrolü
       final hasOverlap = await _repo.checkOverlap(widget.place.id, startDt, endDt);
       if (hasOverlap) {
         if (mounted) {
@@ -129,9 +130,7 @@ class _ReservationFormState extends State<ReservationForm> {
         userId: AuthService.instance.userId,
         startTs: startDt,
         endTs: endDt,
-        attendeeCount: count, // Modele eklenen yeni alan
-        // status varsayılan olarak 'pending' gidecek
-        // isHidden varsayılan olarak false gidecek
+        attendeeCount: count, 
       );
 
       await _repo.createReservation(reservation);
@@ -194,7 +193,6 @@ class _ReservationFormState extends State<ReservationForm> {
         ),
         const SizedBox(height: 16),
 
-        // YENİ: KİŞİ SAYISI GİRİŞİ
         TextFormField(
           controller: _countController,
           keyboardType: TextInputType.number,
@@ -212,7 +210,6 @@ class _ReservationFormState extends State<ReservationForm> {
 
         const Spacer(),
         
-        // KAYDET BUTONU
         SizedBox(
           width: double.infinity,
           height: 50,

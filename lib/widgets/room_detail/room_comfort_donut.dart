@@ -1,3 +1,4 @@
+// room_comfort_donut.dart
 import 'package:flutter/material.dart';
 import '../../data/sensor_model.dart';
 
@@ -10,15 +11,13 @@ class RoomComfortDonut extends StatelessWidget {
   Widget build(BuildContext context) {
     final double score = data.comfortScore;
     final int percent = (score * 100).toInt();
-
-    // Yeni Renk ve İkon Mantığı
     Color scoreColor;
     IconData statusIcon;
     String statusText;
 
     if (percent <= 30) {
       scoreColor =
-          Colors.grey.shade800; // Siyah yerine koyu gri (görünürlük için)
+          Colors.grey.shade800;
       statusIcon = Icons.sentiment_very_dissatisfied;
       statusText = "Kötü";
     } else if (percent <= 40) {
@@ -44,37 +43,34 @@ class RoomComfortDonut extends StatelessWidget {
       children: [
         const SizedBox(height: 10),
         SizedBox(
-          height: 200, // Biraz küçülttük, daha kompakt
+          height: 200,
           width: 200,
           child: Stack(
             children: [
-              // Arka plan halkası (Çok ince)
               Center(
                 child: SizedBox(
                   width: 180,
                   height: 180,
                   child: CircularProgressIndicator(
                     value: 1.0,
-                    strokeWidth: 8, // İnceltildi (önceki 15'ti)
+                    strokeWidth: 8, 
                     color: Colors.white.withAlpha(13),
                   ),
                 ),
               ),
-              // Değer halkası (İnce ve zarif)
               Center(
                 child: SizedBox(
                   width: 180,
                   height: 180,
                   child: CircularProgressIndicator(
                     value:
-                        score > 0 ? score : 0.01, // 0 olsa bile minik görünsün
-                    strokeWidth: 8, // İnceltildi
+                        score > 0 ? score : 0.01, 
+                    strokeWidth: 8,
                     color: scoreColor,
-                    strokeCap: StrokeCap.round, // Yuvarlak uçlar
+                    strokeCap: StrokeCap.round, 
                   ),
                 ),
               ),
-              // Ortadaki İçerik
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -92,10 +88,10 @@ class RoomComfortDonut extends StatelessWidget {
                         Text(
                           "$percent",
                           style: const TextStyle(
-                            fontSize: 56, // Büyük ama
-                            fontWeight: FontWeight.w200, // Çok ince (Thin)
+                            fontSize: 56, 
+                            fontWeight: FontWeight.w200, 
                             color: Colors.white,
-                            height: 1.0, // Satır yüksekliğini sıkılaştır
+                            height: 1.0, 
                           ),
                         ),
                         const Padding(

@@ -1,3 +1,4 @@
+//reservation_list.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/reservation_model.dart';
@@ -20,10 +21,7 @@ class _ReservationListState extends State<ReservationList> {
   @override
   void initState() {
     super.initState();
-    // 1. Hata düzeltme: Build öncesi future başlatılmalı
     _future = _repo.getMyReservations(AuthService.instance.userId);
-    
-    // 2. Arka planda temizlik yap ve listeyi güncelle
     _runCleanup();
   }
 
@@ -75,11 +73,11 @@ class _ReservationListState extends State<ReservationList> {
 
     try {
       if (isCompleted) {
-        // Senaryo 1: Tamamlanmış -> Gizle
+        //Tamamlanmışsa Gizle
         // Durum 'completed' kalır, görünürlük gizlenir
         await _repo.hideReservation(item.id!);
       } else {
-        // Senaryo 2: Aktif -> İptal et
+        // Aktifse İptal et
         // Durum 'cancelled' olur ve listeden düşer
         await _repo.cancelReservation(item.id!);
         if (mounted) {

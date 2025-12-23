@@ -1,3 +1,4 @@
+//app_router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/login_screen.dart';
@@ -8,7 +9,7 @@ import '../screens/room_detail_screen.dart';
 import '../screens/profile_edit_screen.dart';
 import '../screens/reservation_create.dart';
 import '../data/place_model.dart';
-import '../screens/room_list_screen.dart'; // Oda listesi ekranı için gerekli import
+import '../screens/room_list_screen.dart'; 
 import '../screens/admin/admin_places.dart'; 
 import '../screens/admin/admin_shell.dart';
 import '../screens/admin/admin_dashboard.dart';

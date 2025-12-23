@@ -1,4 +1,4 @@
-// lib/screens/room_list_screen.dart
+//room_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/place_model.dart';

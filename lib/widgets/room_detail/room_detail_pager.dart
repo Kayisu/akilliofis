@@ -1,7 +1,7 @@
+// room_detail_pager.dart
 import 'package:flutter/material.dart';
 import '../../data/sensor_model.dart';
 import '../../data/forecast_model.dart';
-
 import 'room_occupancy_chart.dart';
 import 'room_comfort_donut.dart';
 import 'room_sensor_stats.dart';

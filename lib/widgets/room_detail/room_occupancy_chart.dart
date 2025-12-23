@@ -1,10 +1,10 @@
+// room_occupancy_chart.dart
 import 'package:flutter/material.dart';
 import '../../data/forecast_model.dart';
 
 class RoomOccupancyChart extends StatefulWidget {
   final String roomId;
   final List<ForecastModel> forecasts;
-  // Backend artık doğrudan oran (0.0 - 1.0) gönderdiği için capacity parametresine gerek kalmadı.
 
   const RoomOccupancyChart({
     super.key,
@@ -22,9 +22,9 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
   final List<String> _days = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'];
   
-  // Grafikte gösterilecek hedef saatler
+
   final List<String> _timeLabels = ['09:00', '11:00', '13:00', '15:00', '17:00'];
-  final List<int> _targetHours = [9, 11, 13, 15, 17]; // Eşleştirme için integer saatler
+  final List<int> _targetHours = [9, 11, 13, 15, 17]; 
 
   List<ForecastModel> _getForecastsForDay(int dayIndex) {
     if (widget.forecasts.isEmpty) return [];
@@ -38,23 +38,16 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   Widget build(BuildContext context) {
     final dailyData = _getForecastsForDay(_selectedDayIndex);
 
-    // 1. DOLULUK VERİSİ HAZIRLAMA (GÜNCELLENDİ)
-    // take(5) yerine hedef saatleri arayıp buluyoruz.
     final occupancyData = _targetHours.map((hour) {
       try {
-        // O saatteki (örn: 09:00) veriyi bul
         final match = dailyData.firstWhere((f) => f.targetTs.hour == hour);
-        
-        // Backend'den 0.0 - 1.0 arası oran geliyor, direkt kullanıyoruz.
-        // Garanti olsun diye clamp ekledik.
+
         return match.predictedOccupancy.clamp(0.0, 1.0);
       } catch (e) {
-        // Veri yoksa (örn: geçmiş saat) 0 bas
         return 0.0;
       }
     }).toList();
 
-    // 2. KONFOR VERİSİ HAZIRLAMA (GÜNCELLENDİ)
     final comfortData = _targetHours.map((hour) {
       try {
         final match = dailyData.firstWhere((f) => f.targetTs.hour == hour);
@@ -64,13 +57,11 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
       }
     }).toList();
 
-    // while döngülerine gerek kalmadı, map zaten 5 eleman üretir.
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       child: Column(
         children: [
-          // 1. BAŞLIK
+        
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _buildHeaderInfo(occupancyData, comfortData),
@@ -80,7 +71,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
           const Divider(color: Colors.white10),
           const SizedBox(height: 20),
 
-          // 2. GRAFİK ALANI
           SizedBox(
             height: 220, 
             child: LayoutBuilder(
@@ -94,14 +84,12 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
-                      // Arka Plan Çizgisi
                       Positioned(
                         top: height * 0.5,
                         left: 0, right: 0,
                         child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05)),
                       ),
 
-                      // Barlar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -138,7 +126,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  // Saat Etiketi
                                   Text(
                                     _timeLabels[index],
                                     style: TextStyle(
@@ -153,8 +140,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
                           );
                         }),
                       ),
-
-                      // Konfor Çizgisi
                       Positioned.fill(
                         bottom: 30,
                         child: IgnorePointer(
@@ -176,7 +161,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
           const SizedBox(height: 30),
 
-          // 3. LEJANT
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -191,7 +175,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
 
           const SizedBox(height: 30),
 
-          // 4. GÜN SEÇİCİ
           Container(
             height: 50,
             padding: const EdgeInsets.all(4),
@@ -238,7 +221,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
     );
   }
 
-  // Dinamik Başlık Widget'ı
   Widget _buildHeaderInfo(List<double> occupancyData, List<double> comfortData) {
     if (_focusedIndex == null) {
       return Text(
@@ -253,7 +235,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
       );
     }
 
-    // Yüzdeleri hesapla
     final occ = (occupancyData[_focusedIndex!] * 100).toInt();
     final comf = (comfortData[_focusedIndex!] * 100).toInt();
     final time = _timeLabels[_focusedIndex!];
@@ -299,7 +280,6 @@ class _RoomOccupancyChartState extends State<RoomOccupancyChart> {
   }
 }
 
-// --- ÖZEL ÇİZİM SINIFI ---
 class _ComfortLinePainter extends CustomPainter {
   final List<double> data;
   final Color color;

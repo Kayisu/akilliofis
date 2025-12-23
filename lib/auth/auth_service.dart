@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart'; // ChangeNotifier için gerekli
+//auth_service.dart
+import 'package:flutter/foundation.dart'; 
 import 'package:pocketbase/pocketbase.dart';
 import '../core/pb_client.dart';
 
-// Router'ın dinleyebilmesi için ChangeNotifier ekledik
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   static AuthService get instance => _instance;
@@ -25,7 +25,7 @@ class AuthService extends ChangeNotifier {
 
   Future<RecordAuth> login(String email, String password) async {
     final auth = await _pb.collection('users').authWithPassword(email, password);
-    notifyListeners(); // Router'ı haberdar et
+    notifyListeners(); 
     return auth;
   }
 
@@ -61,12 +61,12 @@ class AuthService extends ChangeNotifier {
       'fullName': fullName,
     };
     final record = await _pb.collection('users').update(userId, body: body);
-    notifyListeners(); // Profil güncellendiğinde arayüzü yenile
+    notifyListeners(); 
     return record;
   }
 
   void logout() {
     _pb.authStore.clear();
-    notifyListeners(); // Router'ı haberdar et (Giriş ekranına yönlendirir)
+    notifyListeners(); 
   }
 }

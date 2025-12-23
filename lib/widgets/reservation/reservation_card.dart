@@ -7,7 +7,6 @@ class ReservationCard extends StatelessWidget {
   const ReservationCard({
     super.key,
     required this.reservation,
-    // onCancel callback'ini kaldırdık, artık listeden yönetiliyor
   });
 
   @override
@@ -16,18 +15,15 @@ class ReservationCard extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      margin: EdgeInsets.zero, // Margin'i ListView hallediyor
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      // Tamamlananlar biraz daha sönük dursun
       color: reservation.status == 'completed' 
           ? Theme.of(context).cardColor.withAlpha(120) 
           : Theme.of(context).cardColor,
       child: Padding(
-        // Yüksekliği azaltmak için padding'i küçülttük (16 -> 12)
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // Sol Taraf: İkon ve Durum Rengi
             Container(
               width: 4,
               height: 40,
@@ -37,8 +33,7 @@ class ReservationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            
-            // Orta Taraf: Bilgiler
+          
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +50,6 @@ class ReservationCard extends StatelessWidget {
                           color: reservation.status == 'cancelled' ? Colors.grey : null,
                         ),
                       ),
-                      // Durum Badge'i (Küçük ve şık)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -75,7 +69,6 @@ class ReservationCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Tarih ve Saat tek satırda
                   Row(
                     children: [
                       Icon(Icons.calendar_today, size: 12, color: Colors.grey.shade400),

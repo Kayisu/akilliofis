@@ -1,5 +1,4 @@
-// Dosya: lib/data/sensor_model.dart
-
+//lib/data/sensor_model.dart
 import 'package:pocketbase/pocketbase.dart';
 
 class SensorData {

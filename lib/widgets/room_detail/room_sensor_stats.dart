@@ -1,3 +1,4 @@
+// room_sensor_stats.dart
 import 'package:flutter/material.dart';
 import '../../data/sensor_model.dart';
 
@@ -49,7 +50,7 @@ class RoomSensorStats extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.6, // Biraz daha yatay, zarif oran
+            childAspectRatio: 1.6, 
             children: [
               _buildStatCard(
                 context,

@@ -1,5 +1,6 @@
+//sensor_repo.dart
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // Hata ayıklama çıktısı için
+import 'package:flutter/foundation.dart'; 
 import 'package:pocketbase/pocketbase.dart';
 import '../core/pb_client.dart';
 import 'sensor_model.dart';
@@ -7,7 +8,7 @@ import 'sensor_model.dart';
 class SensorRepository {
   final PocketBase _pb = PbClient.I.client;
 
-  /// Belirtilen odaya ait en son sensör verisini getir
+  //Belirtilen odaya ait en son sensör verisini getir
   Future<SensorData> getLatestSensorData(String placeId) async {
     try {
       // Sensör okumaları koleksiyonundan odaya göre filtrele
